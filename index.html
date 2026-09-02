@@ -1,0 +1,2063 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Draft War Room</title>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#101010">
+<meta name="color-scheme" content="dark">
+<link rel="icon" href="./favicon.png" type="image/png">
+<link rel="apple-touch-icon" href="./apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="War Room">
+<meta name="mobile-web-app-capable" content="yes">
+<style>
+  :root{
+    /* monochrome base - elevation carries structure, not colour */
+    --bg:#101010; --s1:#171717; --s2:#1e1e1e; --s3:#262626;
+    --ln:#2b2b2b; --ln2:#3a3a3a;
+    --tx:#eaeaea; --dim:#8f8f8f; --dimr:#5f5f5f;
+    /* two accents only: amber = concerns you now, red = urgent */
+    --ac:#e0a832; --acd:#8a6620; --urg:#d9534f; --ok:#5aa87a;
+    /* position identity - muted, used as edge markers and small badges */
+    --QB:#a85a6b; --RB:#4d7ea8; --WR:#3f927e; --TE:#a8763f; --DST:#806aa0;
+    --fd:'Impact','Haettenschweiler','Arial Narrow Bold','Franklin Gothic Bold',sans-serif;
+    --fb:system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+    --fm:ui-monospace,'SF Mono','Cascadia Mono',Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:rgba(224,168,50,.14);}
+  body{margin:0;background:var(--bg);color:var(--tx);font-family:var(--fb);min-height:100vh;
+    padding-bottom:26px;-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%;}
+  .wrap{max-width:1500px;margin:0 auto;padding:0 13px;}
+
+  /* ── sticky header ── */
+  .top{position:sticky;top:0;z-index:60;background:var(--bg);border-bottom:1px solid var(--ln);}
+  .prog{height:2px;background:var(--s3);}
+  .progf{height:100%;background:var(--ac);transition:width .3s;}
+  .hdr{display:flex;align-items:center;gap:13px;padding:9px 0;flex-wrap:wrap;}
+  .hb{display:flex;flex-direction:column;}
+  .hl{font-size:8px;letter-spacing:1.4px;text-transform:uppercase;color:var(--dimr);}
+  .hv{font-family:var(--fd);font-size:23px;line-height:1.05;color:var(--tx);font-weight:400;}
+  .hv.ac{color:var(--ac);}
+  .hclock{flex:1;min-width:135px;display:flex;align-items:center;gap:7px;}
+  .hn{font-family:var(--fd);font-size:18px;line-height:1.1;font-weight:400;}
+  .pip{width:7px;height:7px;border-radius:50%;background:var(--dimr);flex-shrink:0;}
+  .pip.me{background:var(--ac);animation:pl 1.1s infinite;}
+  @keyframes pl{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(224,168,50,.55)}50%{opacity:.7;box-shadow:0 0 0 7px rgba(224,168,50,0)}}
+  .upnow{background:var(--ac);color:#0d0d0d;font-family:var(--fd);font-size:11.5px;padding:3px 8px;border-radius:3px;letter-spacing:.7px;}
+
+  /* recent picks strip */
+  .strip{display:flex;gap:6px;align-items:center;padding:0 0 8px;overflow-x:auto;scrollbar-width:none;}
+  .strip::-webkit-scrollbar{display:none;}
+  .stl{font-size:8px;letter-spacing:1.3px;text-transform:uppercase;color:var(--dimr);flex-shrink:0;padding-right:2px;}
+  .sp{background:var(--s2);border:1px solid var(--ln);border-left-width:3px;border-radius:4px;
+    padding:4px 8px;font-size:11px;white-space:nowrap;flex-shrink:0;display:flex;gap:6px;align-items:center;}
+  .sp .n{font-family:var(--fm);font-size:9px;color:var(--dimr);}
+  .sp.reach{border-color:var(--urg);background:rgba(217,83,79,.08);}
+  .sp .rx{font-size:8.5px;color:var(--urg);font-weight:700;}
+
+  /* nudge */
+  .nudge{background:var(--ac);color:#0d0d0d;border-radius:6px;padding:9px 13px;margin-bottom:11px;
+    font-weight:800;font-size:13px;letter-spacing:.3px;display:flex;justify-content:space-between;align-items:center;gap:10px;}
+  .nudge.now{background:var(--urg);color:#fff;}
+  .nudge[hidden]{display:none;}
+
+  /* ── buttons ── */
+  .btn{font-family:var(--fb);font-weight:700;font-size:11px;letter-spacing:.3px;text-transform:uppercase;
+    padding:9px 13px;border-radius:5px;border:1px solid var(--ln2);background:var(--s2);color:var(--tx);
+    cursor:pointer;white-space:nowrap;min-height:36px;}
+  .btn:hover:not(:disabled){background:var(--s3);}
+  .btn:active:not(:disabled){transform:scale(.97);}
+  .btn.p{background:var(--ac);color:#0d0d0d;border-color:var(--ac);}
+  .btn.p:hover:not(:disabled){background:#efbc50;}
+  .btn.s{padding:5px 9px;font-size:10px;min-height:30px;}
+  .btn.g{background:transparent;color:var(--dim);}
+  .btn.danger{background:transparent;color:var(--urg);border-color:rgba(217,83,79,.4);}
+  .btn:disabled{opacity:.25;cursor:not-allowed;}
+
+  /* ── tabs ── */
+  .tabs{display:flex;gap:0;border-bottom:1px solid var(--ln);overflow-x:auto;scrollbar-width:none;}
+  .tabs::-webkit-scrollbar{display:none;}
+  .tab{padding:11px 13px;font-weight:700;font-size:11px;letter-spacing:.4px;text-transform:uppercase;
+    color:var(--dimr);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;}
+  .tab.on{color:var(--tx);border-bottom-color:var(--ac);}
+  .tab:hover:not(.on){color:var(--dim);}
+  .bdg{display:inline-block;background:var(--s3);color:var(--dim);font-size:9px;padding:0 5px;
+    border-radius:7px;margin-left:4px;font-weight:800;line-height:15px;}
+  .bdg.hot{background:var(--ac);color:#0d0d0d;}
+  .panel{padding:13px 0;}
+  .panel[hidden]{display:none;}
+
+  /* ── layout ── */
+  .cols{display:grid;grid-template-columns:1fr 340px;gap:13px;align-items:start;}
+  @media(max-width:1000px){.cols{grid-template-columns:1fr;}}
+
+  .card{background:var(--s1);border:1px solid var(--ln);border-radius:8px;overflow:hidden;margin-bottom:11px;}
+  .ch{display:flex;align-items:center;gap:2px;padding:9px 13px;border-bottom:1px solid var(--ln);background:var(--s2);}
+  .ch h3{font-size:10px;letter-spacing:1.3px;text-transform:uppercase;color:var(--dim);margin:0;font-weight:800;}
+  .ch .cx{margin-left:auto;font-size:10px;color:var(--dimr);font-family:var(--fm);}
+  .cb{padding:12px 13px;}
+  .cb.tight{padding:0;}
+
+  /* ── info ── */
+  .info{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;
+    border:1px solid var(--ln2);color:var(--dimr);font-size:10px;font-weight:700;cursor:pointer;
+    background:transparent;margin-left:5px;padding:0;font-family:var(--fb);flex-shrink:0;}
+  .info:hover{color:var(--ac);border-color:var(--ac);}
+  .pop{position:fixed;z-index:300;max-width:330px;background:var(--s2);border:1px solid var(--ln2);
+    border-radius:7px;padding:12px 14px;font-size:12px;line-height:1.6;box-shadow:0 14px 34px rgba(0,0,0,.75);display:none;}
+  .pop.on{display:block;}
+  .pop p{margin:0 0 8px;} .pop p:last-child{margin:0;}
+  .pop b{color:var(--ac);}
+
+  /* ── log box ── */
+  .qin{width:100%;background:var(--s3);border:1px solid var(--ln2);color:var(--tx);padding:13px;
+    border-radius:6px;font-size:16px;font-family:var(--fb);min-height:46px;}
+  .qin:focus{outline:none;border-color:var(--ac);}
+  .qin::placeholder{color:var(--dimr);}
+  .qres{margin-top:6px;display:flex;flex-direction:column;gap:3px;max-height:250px;overflow-y:auto;}
+  .qr{display:flex;align-items:center;gap:8px;padding:9px 10px;background:var(--s2);border:1px solid var(--ln);
+    border-left-width:3px;border-radius:5px;cursor:pointer;min-height:42px;}
+  .qr.sel,.qr:hover{background:var(--s3);border-color:var(--ac);border-left-color:var(--ac);}
+  .qrn{font-weight:700;font-size:14px;flex:1;}
+  .qrm{font-size:10px;color:var(--dim);font-family:var(--fm);}
+
+  /* ── rec rows ── */
+  .rec{display:flex;gap:10px;padding:11px 13px;border-bottom:1px solid var(--ln);border-left:3px solid transparent;align-items:flex-start;}
+  .rec:last-child{border-bottom:none;}
+  .rec.top{background:var(--s2);}
+  .rrk{font-family:var(--fm);font-size:11px;color:var(--dimr);width:14px;flex-shrink:0;padding-top:2px;}
+  .rec.top .rrk{color:var(--ac);}
+  .rmain{flex:1;min-width:0;}
+  .rnm{font-size:15px;font-weight:700;margin-bottom:2px;}
+  .rmeta{font-size:10.5px;color:var(--dim);font-family:var(--fm);margin-bottom:6px;}
+  .rwhy{display:flex;flex-direction:column;gap:2px;}
+  .rwhy div{font-size:11px;color:var(--dim);line-height:1.45;}
+  .rwhy div.key{color:var(--tx);}
+  .rwhy div.warn{color:var(--ac);}
+  .rside{display:flex;flex-direction:column;gap:5px;align-items:flex-end;flex-shrink:0;}
+  .score{font-family:var(--fm);font-size:15px;color:var(--dim);}
+  .rec.top .score{color:var(--ac);}
+
+  /* ── pos marker ── */
+  .pm{display:inline-block;font-size:9px;font-weight:800;letter-spacing:.4px;padding:1px 4px;
+    border-radius:2px;border:1px solid;background:transparent;}
+  .edge{border-left-width:3px!important;border-left-style:solid!important;}
+
+  /* ── wait cost ── */
+  .wc{display:flex;align-items:center;gap:9px;padding:8px 13px;border-bottom:1px solid var(--ln);}
+  .wc:last-child{border-bottom:none;}
+  .wcp{font-size:11px;font-weight:800;width:32px;flex-shrink:0;}
+  .wcb{flex:1;height:16px;background:var(--s3);border-radius:2px;overflow:hidden;position:relative;}
+  .wcf{height:100%;}
+  .wcv{font-family:var(--fm);font-size:12px;width:52px;text-align:right;flex-shrink:0;}
+  .wcn{font-size:10px;color:var(--dimr);padding:2px 13px 9px;line-height:1.5;}
+
+  /* ── room read ── */
+  .room{display:flex;gap:11px;align-items:baseline;flex-wrap:wrap;}
+  .rmv{font-family:var(--fd);font-size:24px;font-weight:400;}
+  .rmv.hot{color:var(--urg);} .rmv.warm{color:var(--ac);}
+  .rmt{font-size:11.5px;color:var(--dim);line-height:1.5;flex:1;min-width:150px;}
+
+  /* ── gaps strip ── */
+  .gaps{display:flex;gap:5px;flex-wrap:wrap;}
+  .gp{background:var(--s2);border:1px solid var(--ln);border-left-width:3px;border-radius:4px;
+    padding:5px 9px;font-size:11px;display:flex;gap:6px;align-items:center;}
+  .gp .gl{font-size:8px;letter-spacing:.9px;color:var(--dimr);text-transform:uppercase;}
+  .gp.need{border-color:var(--ac);}
+  .gp.need .gn{color:var(--ac);font-weight:800;}
+
+  /* ── tables ── */
+  .tw{overflow:hidden;}
+  .tsc{max-height:64vh;overflow:auto;-webkit-overflow-scrolling:touch;}
+  table{width:100%;border-collapse:collapse;}
+  thead th{text-align:left;font-size:8px;text-transform:uppercase;letter-spacing:1px;color:var(--dimr);
+    padding:8px 9px;background:var(--s2);border-bottom:1px solid var(--ln);position:sticky;top:0;z-index:2;white-space:nowrap;}
+  tbody tr{border-bottom:1px solid var(--ln);}
+  tbody tr:last-child{border-bottom:none;}
+  tbody tr:hover{background:var(--s2);}
+  tbody tr.tg{background:rgba(224,168,50,.05);}
+  tbody tr.capped{opacity:.3;}
+  td{padding:8px 9px;font-size:12.5px;vertical-align:middle;}
+  .pn{font-weight:700;}
+  .mono{font-family:var(--fm);font-size:11px;color:var(--dim);}
+  .rnum{font-family:var(--fm);font-size:11.5px;color:var(--tx);}
+  .star{background:none;border:none;cursor:pointer;font-size:15px;color:var(--dimr);padding:4px;min-width:30px;min-height:30px;}
+  .star.on{color:var(--ac);}
+  .bump{background:none;border:1px solid var(--ln2);cursor:pointer;font-size:9px;color:var(--dimr);
+    padding:2px 4px;border-radius:3px;line-height:1;min-width:20px;}
+  .bump.up{color:var(--ok);border-color:rgba(90,168,122,.4);}
+  .bump.dn{color:var(--urg);border-color:rgba(217,83,79,.4);}
+  .sv{display:inline-block;font-family:var(--fm);font-size:10px;font-weight:700;padding:2px 6px;
+    border-radius:8px;min-width:36px;text-align:center;background:var(--s3);color:var(--dim);}
+  .sv.lo{background:rgba(217,83,79,.16);color:#ef8b87;}
+  .sv.mid{background:rgba(224,168,50,.14);color:var(--ac);}
+  .role{font-size:9px;color:var(--dimr);}
+
+  /* mobile cards */
+  .mcards{display:none;flex-direction:column;}
+  .mc{border-bottom:1px solid var(--ln);border-left:3px solid transparent;padding:10px 12px;display:flex;gap:9px;align-items:center;}
+  .mc.tg{background:rgba(224,168,50,.05);}
+  .mc.capped{opacity:.3;}
+  .mcl{flex:1;min-width:0;}
+  .mcn{font-weight:700;font-size:14px;margin-bottom:2px;}
+  .mcm{font-size:10px;color:var(--dim);font-family:var(--fm);display:flex;gap:7px;flex-wrap:wrap;align-items:center;}
+
+  /* ── flow ── */
+  .fh{position:sticky;top:0;z-index:3;background:var(--s2);border-top:1px solid var(--ln);
+    border-bottom:1px solid var(--ln);padding:7px 12px;display:flex;justify-content:space-between;
+    align-items:center;font-size:9px;text-transform:uppercase;letter-spacing:1.2px;color:var(--dimr);}
+  .fh b{color:var(--tx);font-size:11px;font-weight:800;letter-spacing:.8px;}
+  .fr{display:flex;align-items:center;gap:9px;padding:7px 12px;border-bottom:1px solid var(--ln);
+    font-size:12.5px;border-left:3px solid transparent;}
+  .fno{font-family:var(--fm);font-size:10px;color:var(--dimr);width:28px;flex-shrink:0;}
+  .fteam{font-size:10px;color:var(--dimr);width:74px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .fpl{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .fr.mine{background:var(--s2);}
+  .fr.mine .fteam{color:var(--ac);font-weight:700;}
+  .fr.cur{background:rgba(224,168,50,.14);border-left-color:var(--ac);}
+  .fr.proj{opacity:.5;} .fr.proj .fpl{font-style:italic;}
+  .fr.proj.mine{opacity:.92;}
+  .fr.reach{border-left-color:var(--urg);}
+  .fedit{background:none;border:none;color:var(--dimr);cursor:pointer;font-size:12px;padding:2px 5px;min-width:26px;}
+  .fedit:hover{color:var(--ac);}
+
+  /* ── board grid ── */
+  .bsc{overflow:auto;max-height:70vh;-webkit-overflow-scrolling:touch;}
+  .bg{border-collapse:collapse;}
+  .bg th{background:var(--s2);padding:6px 4px;font-size:9.5px;text-align:center;border:1px solid var(--ln);
+    position:sticky;top:0;z-index:2;color:var(--dim);font-weight:700;}
+  .bg th.mine{color:var(--ac);}
+  .bg td{border:1px solid var(--ln);padding:4px;font-size:9.5px;text-align:center;min-width:76px;max-width:98px;
+    border-left-width:3px;border-left-color:transparent;}
+  .bg .rl{background:var(--s2);font-weight:700;color:var(--dimr);font-size:10px;position:sticky;left:0;z-index:1;
+    min-width:30px;border-left-width:1px;}
+  .bcell{cursor:pointer;}
+  .bcell:hover{background:var(--s2);}
+  .bmine{background:rgba(255,255,255,.03);}
+  .bcur{background:rgba(224,168,50,.16);box-shadow:inset 0 0 0 1px var(--ac);}
+  .bno{font-family:var(--fm);font-size:8px;color:var(--dimr);display:block;}
+  .breach{color:var(--urg);}
+
+  /* ── modal ── */
+  .ov{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:400;display:none;align-items:center;justify-content:center;padding:16px;}
+  .ov.on{display:flex;}
+  .md{background:var(--s1);border:1px solid var(--ln2);border-radius:9px;max-width:460px;width:100%;max-height:86vh;overflow:auto;}
+  .mdh{padding:12px 15px;border-bottom:1px solid var(--ln);display:flex;justify-content:space-between;align-items:center;}
+  .mdh h3{margin:0;font-size:12px;letter-spacing:1.1px;text-transform:uppercase;color:var(--dim);font-weight:800;}
+  .mdb{padding:14px 15px;}
+
+  /* ── insights bits ── */
+  .hbar{display:flex;align-items:center;gap:8px;margin-bottom:5px;}
+  .hbl{font-size:11px;width:80px;flex-shrink:0;color:var(--tx);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .hbt{flex:1;height:16px;background:var(--s3);border-radius:2px;overflow:hidden;display:flex;}
+  .hbs{height:100%;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:800;color:#0d0d0d;}
+  .hbv{font-family:var(--fm);font-size:10.5px;color:var(--dim);width:32px;text-align:right;flex-shrink:0;}
+  .hbar.clk{cursor:pointer;border-radius:3px;padding:2px 3px;margin-left:-3px;margin-right:-3px;}
+  .hbar.clk:hover{background:var(--s2);}
+  .hbx{font-size:9px;color:var(--dimr);width:10px;flex-shrink:0;}
+  .drill{border:1px solid var(--ln);border-left:3px solid var(--ac);background:var(--s2);
+    border-radius:0 5px 5px 0;margin:2px 0 9px;overflow:hidden;}
+  .drillh{font-size:9.5px;text-transform:uppercase;letter-spacing:.9px;color:var(--dimr);padding:8px 11px;
+    border-bottom:1px solid var(--ln);display:flex;justify-content:space-between;gap:8px;}
+  .drills{max-height:320px;overflow-y:auto;}
+  .needg{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:7px;}
+  .nt{background:var(--s2);border:1px solid var(--ln);border-radius:6px;padding:9px 10px;cursor:pointer;}
+  .nt.me{border-color:var(--ac);}
+  .nt.open{background:var(--s3);}
+  .ntn{font-size:11px;font-weight:700;margin-bottom:5px;display:flex;justify-content:space-between;gap:6px;}
+  .ntp{display:flex;gap:4px;flex-wrap:wrap;}
+  .np{font-size:9px;font-weight:700;padding:2px 5px;border-radius:3px;background:var(--s3);color:var(--dim);}
+  .np.gap{color:var(--ac);}
+  .lgnd{display:flex;gap:10px;flex-wrap:wrap;margin-top:9px;font-size:10px;color:var(--dimr);}
+  .lgi{display:flex;align-items:center;gap:5px;}
+  .lgs{width:9px;height:9px;border-radius:2px;}
+  svg.spark{width:100%;height:120px;display:block;}
+  .rg{display:grid;grid-template-columns:repeat(auto-fill,minmax(178px,1fr));gap:7px;}
+  .sc{background:var(--s2);border:1px solid var(--ln);border-left-width:3px;border-radius:6px;padding:9px 10px;}
+  .sc.emp{border-style:dashed;border-left-color:var(--ln);}
+  .sl2{font-size:8px;text-transform:uppercase;letter-spacing:1px;color:var(--dimr);margin-bottom:2px;}
+  .spn{font-weight:700;font-size:13px;}
+  .se{color:var(--dimr);font-style:italic;font-size:12px;}
+  .sm{font-size:10px;color:var(--dim);margin-top:2px;font-family:var(--fm);}
+
+  /* setup */
+  .setg{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:10px;margin-bottom:13px;}
+  .sf{background:var(--s1);border:1px solid var(--ln);border-radius:7px;padding:11px 12px;}
+  .sfl{font-size:8.5px;text-transform:uppercase;letter-spacing:1px;color:var(--dimr);margin-bottom:6px;}
+  .sfi{width:100%;background:var(--s3);border:1px solid var(--ln2);color:var(--tx);padding:9px;
+    border-radius:5px;font-size:15px;font-family:var(--fb);min-height:38px;}
+  .rowin{display:flex;gap:6px;align-items:center;margin-bottom:5px;}
+  .rowin label{font-size:10.5px;color:var(--dimr);width:38px;}
+  .rowin input{width:100%;background:var(--s3);border:1px solid var(--ln2);color:var(--tx);
+    padding:6px 7px;border-radius:4px;font-size:13px;font-family:var(--fm);}
+  .tnames{display:grid;grid-template-columns:repeat(auto-fill,minmax(158px,1fr));gap:6px;}
+  .tn{display:flex;align-items:center;gap:6px;}
+  .tnx{font-size:9.5px;color:var(--dimr);font-family:var(--fm);width:18px;flex-shrink:0;}
+  .tni{flex:1;background:var(--s3);border:1px solid var(--ln2);color:var(--tx);padding:7px 8px;
+    border-radius:4px;font-size:13px;min-width:0;}
+  .tni.me{border-color:var(--ac);color:var(--ac);font-weight:700;}
+  .dz{border:1px solid rgba(217,83,79,.3);border-radius:7px;padding:12px 14px;}
+  .exp{width:100%;background:var(--s3);border:1px solid var(--ln2);color:var(--tx);font-family:var(--fm);
+    font-size:11.5px;padding:10px;border-radius:5px;min-height:150px;resize:vertical;}
+
+  .alerts{display:flex;flex-direction:column;}
+  .al{display:flex;gap:9px;padding:9px 13px;font-size:12px;line-height:1.5;border-bottom:1px solid var(--ln);
+    border-left:3px solid var(--ln2);}
+  .al:last-child{border-bottom:none;}
+  .al.urgent{border-left-color:var(--urg);color:#ef8b87;}
+  .al.warn{border-left-color:var(--ac);color:var(--ac);}
+  .al .ic{flex-shrink:0;font-size:10px;font-weight:800;letter-spacing:.5px;}
+  .empty{text-align:center;padding:26px 15px;color:var(--dimr);font-size:12px;line-height:1.6;}
+  .saveind{position:fixed;bottom:9px;right:9px;background:var(--s3);border:1px solid var(--ln2);
+    color:var(--dim);font-size:9.5px;padding:5px 10px;border-radius:12px;opacity:0;transition:opacity .3s;
+    pointer-events:none;z-index:200;}
+  .saveind.on{opacity:1;}
+  footer{text-align:center;color:var(--dimr);font-size:9.5px;margin-top:16px;line-height:1.7;}
+  .seg{display:inline-flex;border:1px solid var(--ln2);border-radius:5px;overflow:hidden;}
+  .seg button{background:transparent;border:none;color:var(--dimr);font-family:var(--fb);font-weight:700;
+    font-size:10.5px;letter-spacing:.4px;text-transform:uppercase;padding:8px 12px;cursor:pointer;min-height:34px;}
+  .seg button.on{background:var(--s3);color:var(--tx);}
+
+  @media(max-width:560px){
+    .tw{display:none;} .mcards{display:flex;}
+    .hv{font-size:17px;} .hn{font-size:14px;}
+    .rg{grid-template-columns:1fr 1fr;} .needg{grid-template-columns:1fr 1fr;}
+    .setg{grid-template-columns:1fr;} .hbl{width:60px;font-size:10px;}
+    .tab{padding:10px 10px;font-size:10px;}
+  }
+  @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;}}
+</style>
+</head>
+<body>
+<div class="top"><div class="prog"><div class="progf" id="progf"></div></div><div class="wrap">
+  <div class="hdr">
+    <div class="hb"><div class="hl">Rd</div><div class="hv" id="hRnd">1</div></div>
+    <div class="hb"><div class="hl">Pick</div><div class="hv ac" id="hPick">1</div></div>
+    <div class="hclock">
+      <div class="pip" id="pip"></div>
+      <div class="hb"><div class="hl">On the clock</div><div class="hn" id="hName">Team 1</div></div>
+      <div id="hUp"></div>
+    </div>
+    <div class="hb"><div class="hl">Your next</div><div class="hv" id="hNext" style="font-size:18px">6</div></div>
+    <button class="btn g" id="btnUndo">&#8634; Undo</button>
+  </div>
+  <div class="strip" id="strip"></div>
+  <div class="tabs" id="tabs">
+    <div class="tab on" data-t="draft">Draft</div>
+    <div class="tab" data-t="players">Players</div>
+    <div class="tab" data-t="flow">Flow</div>
+    <div class="tab" data-t="targets">Targets <span class="bdg" id="bTgt">0</span></div>
+    <div class="tab" data-t="insights">Insights</div>
+    <div class="tab" data-t="board">Board</div>
+    <div class="tab" data-t="setup">Setup</div>
+  </div>
+</div></div>
+
+<div class="wrap">
+
+<!-- ══ DRAFT (live surface) ══ -->
+<div class="panel" id="p-draft">
+  <div class="nudge" id="nudge" hidden></div>
+  <div class="cols">
+    <div>
+      <div class="card">
+        <div class="cb" style="padding:11px 12px;">
+          <input class="qin" id="q" type="text" placeholder="Log a pick &mdash; type a name, press Enter" autocomplete="off" autocorrect="off" spellcheck="false">
+          <div class="qres" id="qres"></div>
+        </div>
+      </div>
+      <div class="card" id="alertCard" hidden>
+        <div class="ch"><h3>Watch out</h3></div>
+        <div class="alerts" id="alerts"></div>
+      </div>
+      <div class="card">
+        <div class="ch"><h3>Best for you</h3><button class="info" data-info="advisor">i</button>
+          <span class="cx" id="advPick"></span></div>
+        <div class="cb tight" id="recs"></div>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="ch"><h3>Your roster</h3><span class="cx" id="rosterCx"></span></div>
+        <div class="cb"><div class="gaps" id="gaps"></div></div>
+      </div>
+      <div class="card">
+        <div class="ch"><h3>Cost of waiting</h3><button class="info" data-info="wait">i</button></div>
+        <div class="cb tight" id="waitCost"></div>
+      </div>
+      <div class="card">
+        <div class="ch"><h3>Room read</h3><button class="info" data-info="room">i</button></div>
+        <div class="cb"><div class="room" id="room"></div></div>
+      </div>
+      <div class="card">
+        <div class="ch"><h3>Targets at risk</h3><button class="info" data-info="atrisk">i</button></div>
+        <div class="cb tight" id="atRisk"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PLAYERS ══ -->
+<div class="panel" id="p-players" hidden>
+  <div class="card">
+    <div class="cb" style="padding:10px 12px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+      <button class="btn s" data-p="ALL" id="fALL">All</button>
+      <button class="btn s g" data-p="QB">QB</button>
+      <button class="btn s g" data-p="RB">RB</button>
+      <button class="btn s g" data-p="WR">WR</button>
+      <button class="btn s g" data-p="TE">TE</button>
+      <button class="btn s g" data-p="DST">DST</button>
+      <input class="qin" id="search" type="text" placeholder="Search..." style="flex:1;min-width:120px;font-size:14px;min-height:34px;padding:7px 10px;">
+      <select class="sfi" id="sort" style="width:auto;min-height:34px;font-size:13px;padding:7px 9px;">
+        <option value="fit">Fit for me</option><option value="adp">ADP</option>
+        <option value="proj">Projected</option><option value="vor">VOR</option>
+        <option value="surv">Most likely gone</option><option value="name">Name</option>
+      </select>
+      <button class="info" data-info="cols">i</button>
+    </div>
+    <div class="tw"><div class="tsc"><table>
+      <thead><tr><th style="width:30px;"></th><th style="width:18%;">Player</th><th>Pos</th><th>Tm</th><th>Bye</th>
+        <th>Rd</th><th>ADP</th><th>Proj</th><th>VOR</th><th>Role</th><th>Lasts</th><th>My read</th><th></th></tr></thead>
+      <tbody id="ptb"></tbody>
+    </table></div></div>
+    <div class="mcards" id="pmc"></div>
+  </div>
+</div>
+
+<!-- ══ FLOW ══ -->
+<div class="panel" id="p-flow" hidden>
+  <div class="card">
+    <div class="ch"><h3>Draft flow</h3><button class="info" data-info="flow">i</button>
+      <span class="cx">picks run 1 &rarr; last, top to bottom &middot; tap one to fix it</span></div>
+    <div class="tsc" id="flowBody" style="max-height:70vh;"></div>
+  </div>
+</div>
+
+<!-- ══ TARGETS ══ -->
+<div class="panel" id="p-targets" hidden>
+  <div id="tgtGroups"></div>
+</div>
+
+<!-- ══ INSIGHTS ══ -->
+<div class="panel" id="p-insights" hidden>
+  <div class="card">
+    <div class="ch"><h3>What each team still needs</h3><button class="info" data-info="needs">i</button></div>
+    <div class="cb"><div class="needg" id="needGrid"></div><div id="needDetail"></div></div>
+  </div>
+  <div class="card">
+    <div class="ch"><h3>Quality remaining by position</h3><button class="info" data-info="depth">i</button></div>
+    <div class="cb"><div id="depthBars"></div></div>
+  </div>
+  <div class="card">
+    <div class="ch"><h3>How depth has drained</h3><button class="info" data-info="drain">i</button></div>
+    <div class="cb"><svg class="spark" id="drainSvg" viewBox="0 0 700 120" preserveAspectRatio="none"></svg>
+      <div class="lgnd" id="drainLgnd"></div></div>
+  </div>
+  <div class="card">
+    <div class="ch"><h3>Positions drafted by team</h3><button class="info" data-info="byteam">i</button></div>
+    <div class="cb"><div id="byTeam"></div><div class="lgnd" id="byTeamLgnd"></div></div>
+  </div>
+  <div class="card">
+    <div class="ch"><h3>Best values still available</h3><button class="info" data-info="values">i</button></div>
+    <div class="cb"><div id="valueList"></div></div>
+  </div>
+  <div class="card">
+    <div class="ch"><h3>Rosters</h3>
+      <select class="sfi" id="tsel" style="width:auto;margin-left:auto;min-height:32px;font-size:13px;padding:6px 9px;"></select></div>
+    <div class="cb"><div id="bwarn"></div><div class="rg" id="rg"></div></div>
+  </div>
+</div>
+
+<!-- ══ BOARD ══ -->
+<div class="panel" id="p-board" hidden>
+  <div class="card">
+    <div class="ch"><h3>Draft board</h3><span class="cx">tap any pick to fix it</span></div>
+    <div class="bsc"><table class="bg" id="bg"></table></div>
+  </div>
+</div>
+
+<!-- ══ SETUP ══ -->
+<div class="panel" id="p-setup" hidden>
+  <div class="card"><div class="ch"><h3>League</h3><button class="info" data-info="league">i</button></div>
+    <div class="cb"><div class="setg" style="margin-bottom:0;">
+      <div class="sf"><div class="sfl">Your draft slot</div><select class="sfi" id="cfgSlot"></select></div>
+      <div class="sf"><div class="sfl">Teams</div><select class="sfi" id="cfgTeams"></select></div>
+      <div class="sf"><div class="sfl">Rounds</div><select class="sfi" id="cfgRounds"></select></div>
+    </div></div>
+  </div>
+  <div class="card"><div class="ch"><h3>Roster rules</h3><button class="info" data-info="roster">i</button></div>
+    <div class="cb"><div class="setg" style="margin-bottom:0;">
+      <div class="sf"><div class="sfl">Starters</div>
+        <div class="rowin"><label>QB</label><input type="number" min="0" max="4" id="stQB"><label>RB</label><input type="number" min="0" max="5" id="stRB"></div>
+        <div class="rowin"><label>WR</label><input type="number" min="0" max="5" id="stWR"><label>TE</label><input type="number" min="0" max="4" id="stTE"></div>
+        <div class="rowin" style="margin-bottom:0;"><label>FLEX</label><input type="number" min="0" max="5" id="stFLEX"><label>DST</label><input type="number" min="0" max="2" id="stDST"></div>
+      </div>
+      <div class="sf"><div class="sfl">Position maximums</div>
+        <div class="rowin"><label>QB</label><input type="number" min="1" max="8" id="mxQB"><label>RB</label><input type="number" min="1" max="12" id="mxRB"></div>
+        <div class="rowin"><label>WR</label><input type="number" min="1" max="12" id="mxWR"><label>TE</label><input type="number" min="1" max="8" id="mxTE"></div>
+        <div class="rowin" style="margin-bottom:0;"><label>DST</label><input type="number" min="1" max="5" id="mxDST"></div>
+      </div>
+      <div class="sf"><div class="sfl">Summary</div><div id="cfgSummary" style="font-size:11.5px;color:var(--dim);line-height:1.7;"></div></div>
+    </div></div>
+  </div>
+  <div class="card"><div class="ch"><h3>Team names</h3></div>
+    <div class="cb"><div class="tnames" id="tnames"></div></div>
+  </div>
+  <div class="card"><div class="ch"><h3>Export</h3><button class="info" data-info="export">i</button></div>
+    <div class="cb">
+      <div style="display:flex;gap:6px;margin-bottom:9px;flex-wrap:wrap;">
+        <button class="btn s" id="expMine">My roster</button>
+        <button class="btn s" id="expAll">Full draft board</button>
+        <button class="btn s" id="expCsv">CSV</button>
+        <button class="btn s" id="expBackup">Backup</button>
+        <button class="btn s p" id="expCopy">Copy</button>
+      </div>
+      <textarea class="exp" id="expOut" placeholder="Pick a format above, or paste a backup here and press Restore."></textarea>
+      <div style="display:flex;gap:6px;margin-top:9px;align-items:center;flex-wrap:wrap;">
+        <button class="btn s" id="btnImport">Restore from backup</button>
+        <span id="impMsg" style="font-size:11px;color:var(--dim);"></span>
+      </div>
+      <div style="font-size:10.5px;color:var(--dimr);margin-top:9px;line-height:1.55;">
+        Your board is saved in this browser on this device only. To move it to another device,
+        press Backup, copy the text, then paste it into this box there and press Restore.
+        Restoring replaces everything currently logged.
+      </div>
+    </div>
+  </div>
+  <div class="card"><div class="ch"><h3>Data sources</h3><button class="info" data-info="sources">i</button></div>
+    <div class="cb"><p style="font-size:11.5px;color:var(--dim);line-height:1.65;margin:0;">
+      Tap the info icon for where every number comes from, and which fields are sourced versus judgment.</p></div>
+  </div>
+  <div class="card"><div class="ch"><h3>Danger zone</h3></div>
+    <div class="cb"><div class="dz">
+      <div style="font-size:11.5px;color:var(--dim);line-height:1.55;margin-bottom:10px;">
+        Clearing wipes every logged pick. Targets, your own player ratings, and league settings are kept.
+        Use Undo in the header for single mistakes, or tap any pick on the Board or Flow to fix it.</div>
+      <button class="btn danger" id="btnReset">Clear all logged picks</button>
+    </div></div>
+  </div>
+</div>
+
+</div><!-- /wrap -->
+
+<div class="ov" id="ov"><div class="md">
+  <div class="mdh"><h3 id="mdTitle">Edit pick</h3><button class="btn s g" id="mdClose">Close</button></div>
+  <div class="mdb" id="mdBody"></div>
+</div></div>
+
+<div class="pop" id="pop"></div>
+<div class="saveind" id="saveInd">Saved</div>
+<footer>Runs offline &mdash; no network calls. Picks auto-save to this browser.</footer>
+
+<script>
+"use strict";
+var CFG={teams:12,slot:6,rounds:16,start:{QB:1,RB:2,WR:2,TE:1,DST:1},flex:2,
+         max:{QB:3,RB:6,WR:6,TE:3,DST:3}};
+var KEY='ffwarroom5';
+var COL={QB:'#a85a6b',RB:'#4d7ea8',WR:'#3f927e',TE:'#a8763f',DST:'#806aa0',K:'#666'};
+var FLEXOK=['RB','WR','TE'], POSN=['QB','RB','WR','TE','DST'];
+var SOS={BAL:'easy',MIN:'easy',NYJ:'easy',TEN:'easy',PHI:'easy',CLE:'easy',KC:'hard',NE:'hard'};
+var OL={DEN:'elite',PHI:'elite',TB:'elite',LAR:'elite',SF:'elite',DAL:'good',IND:'good',BUF:'good',CLE:'poor',TEN:'poor'};
+var REACH_PICKS=15;   // going this many picks ahead of ADP counts as a reach
+
+var INFO={
+ advisor:"<p>Scored on projected points above a replacement starter, role in the offense, what your roster needs, positional scarcity, and whether he survives to your next turn.</p><p>Need <b>gates</b> the score rather than competing with it, so a position you can't use is discounted hard, and one you're at the maximum for is excluded entirely.</p><p>Your own up/down ratings from the Players tab shift the score by up to 15% each step.</p>",
+ wait:"<p>The real question at every pick isn't who's best &mdash; it's what you give up by waiting a round.</p><p>For each position: the best available now, against the best one likely (over 50%) to still be there at your next turn. The gap is the cost in projected points.</p><p>A big number means act now. A small one means that position can wait, whatever the run says.</p>",
+ room:"<p>Every survival estimate starts from national ADP, which assumes your room drafts like the internet. Rooms don't.</p><p>This measures the actual gap between where players are going and where ADP said they'd go, over the last 25 picks, and shifts every timing estimate to match. A room running hot means players vanish sooner than the raw numbers suggest.</p><p>It also widens the uncertainty band as the draft goes on, because ADP loses its grip once people start picking on feel.</p><p>The read is weak until roughly 12 picks are logged, and it says so.</p>",
+ atrisk:"<p>Starred players with less than a 50% chance of surviving to your next turn, soonest to disappear first. This is the short list of people you must take now or lose.</p>",
+ cols:"<p><b>Rd</b> is ADP as round.pick for your league size &mdash; 2.07 means round 2, seventh pick. <b>VOR</b> is projected points above a replacement starter, which matters more than raw projection.</p><p><b>My read</b> lets you mark a player above or below consensus. Two steps each way; it shifts his score without overriding the data.</p><p>A dash means unknown, never zero.</p>",
+ flow:"<p>The draft top to bottom, pick 1 through the end, with round markers. Logged picks are solid; greyed italic rows project the rest assuming ADP order.</p><p>That assumption breaks the moment someone reaches, so treat the projection as a sketch of which <b>tier</b> reaches your next pick, not which name. Reaches are marked in red.</p><p>Tap any logged pick to correct it.</p>",
+ needs:"<p>Unfilled starting slots per team. Before your turn comes, scan the teams picking between now and then &mdash; their gaps are the positions about to disappear.</p>",
+ depth:"<p>Players left who project above a replacement starter. The honest measure of whether you can wait: twenty quality players left means no urgency, however many just went.</p><p>Tap any bar to see exactly who.</p>",
+ drain:"<p>The same count traced round by round. A line falling off a cliff is a position being cleared out.</p>",
+ byteam:"<p>What each team has drafted. Teams already stacked at a position rarely take another. Tap a row for their picks.</p>",
+ values:"<p>Available players falling furthest past ADP. A big gap means the room has overlooked him &mdash; though sometimes the room knows something, so check for news.</p>",
+ league:"<p>Change your slot any time; snake order, your picks and every timing estimate recompute instantly. Changing team count or rounds reshapes the board, so it asks first.</p>",
+ roster:"<p>Starters and bench drive the sense of need. Position maximums are hard limits &mdash; hit one and that position stops being recommended.</p>",
+ export:"<p><b>My roster</b> and <b>Full draft board</b> are plain text for a group chat. <b>CSV</b> opens in a spreadsheet. <b>Backup</b> is the complete state &mdash; picks, targets, your ratings and league settings.</p><p>Storage is per browser on each device, so nothing syncs on its own. Backup then Restore is how a board moves from your phone to your tablet. Restoring replaces whatever is logged.</p>",
+ sources:"<p><b>ADP</b> &mdash; consensus public mocks, late Aug 2026. <b>Projected points</b> &mdash; full-season PPR from NFLFantasyEdge, Aug 30. One source, not a blend.</p><p><b>VOR</b> is computed here: projection minus a replacement starter, scaled to your league size.</p><p><b>Role</b> is the volume signal and is judgment, not data. An earlier build computed each player's share of his team's projected offense; it turned out to be an artifact of which players the pool covered, so it was cut rather than shipped looking precise.</p><p><b>Dashes mean unknown.</b> 38 players have a projection but no ADP (no timing estimate). 21, mostly deep handcuffs, have an ADP but no verified projection and are scored on role, need and scarcity alone.</p><p><b>Early schedule</b> and <b>O-line</b> are tagged only where a clear published lean exists and act as tiebreakers.</p><p><b>Bye weeks</b> were assembled by hand and are the least verified field. Check against ESPN before relying on one.</p>"
+};
+
+var RAW=[
+["Jahmyr Gibbs","RB","DET",6,1.5,331.4,"Alpha","",""],
+["Bijan Robinson","RB","ATL",11,2.2,324.9,"Alpha","",""],
+["Puka Nacua","WR","LAR",11,3.1,312.5,"Alpha","","Suspension chatter - verify"],
+["Ja'Marr Chase","WR","CIN",6,3.8,311.1,"Alpha","",""],
+["Jaxon Smith-Njigba","WR","SEA",11,5.5,284.6,"Alpha","",""],
+["Amon-Ra St. Brown","WR","DET",6,6.4,280.5,"Alpha","",""],
+["Christian McCaffrey","RB","SF",8,6.6,291.0,"Alpha","","Age 30, 400+ touches in 2025"],
+["Jonathan Taylor","RB","IND",13,7.5,272.3,"Alpha","","Injury draftLog"],
+["Drake London","WR","ATL",11,10.2,250.2,"Alpha","",""],
+["De'Von Achane","RB","MIA",6,10.6,257.4,"High","",""],
+["CeeDee Lamb","WR","DAL",14,10.7,270.5,"Alpha","",""],
+["Justin Jefferson","WR","MIN",6,11.7,250.4,"Alpha","","Tied to Murray's play"],
+["James Cook III","RB","BUF",7,12.6,260.8,"High","","TD regression risk"],
+["Chase Brown","RB","CIN",6,13.4,255.2,"High","",""],
+["Rashee Rice","WR","KC",5,14.9,229.3,"High","",""],
+["Derrick Henry","RB","BAL",13,17.4,246.9,"Alpha","","True workhorse"],
+["A.J. Brown","WR","NE",11,17.6,247.2,"Alpha","",""],
+["Ashton Jeanty","RB","LV",13,17.6,233.9,"High","","Rookie, wide range"],
+["Saquon Barkley","RB","PHI",10,19.3,246.7,"Alpha","",""],
+["Chris Olave","WR","NO",8,19.8,235.9,"Alpha","",""],
+["Nico Collins","WR","HOU",8,20.4,262.0,"Alpha","",""],
+["George Pickens","WR","DAL",14,20.7,245.7,"High","",""],
+["Kenneth Walker","RB","KC",5,21.6,244.0,"High","",""],
+["Omarion Hampton","RB","LAC",7,23.3,242.9,"High","",""],
+["Garrett Wilson","WR","NYJ",13,25.6,224.9,"Alpha","",""],
+["Zay Flowers","WR","BAL",13,25.9,228.2,"High","",""],
+["Malik Nabers","WR","NYG",8,26.8,236.7,"Alpha","","ACL recovery - verify"],
+["Jeremiyah Love","RB","ARI",14,27.8,211.8,"High","","Rookie"],
+["Trey McBride","TE","ARI",14,28.9,234.9,"Alpha","",""],
+["DeVonta Smith","WR","PHI",10,29.5,229.2,"High","",""],
+["Josh Jacobs","RB","GB",11,31.1,202.6,"High","",""],
+["Tetairoa McMillan","WR","CAR",5,31.5,223.0,"Alpha","",""],
+["Kyren Williams","RB","LAR",11,32.0,208.0,"High","",""],
+["Josh Allen","QB","BUF",7,33.7,361.5,"Alpha","","QB1 overall"],
+["Breece Hall","RB","NYJ",13,34.7,211.0,"High","",""],
+["Emeka Egbuka","WR","TB",10,34.8,224.0,"High","",""],
+["Brock Bowers","TE","LV",13,35.0,253.5,"Alpha","",""],
+["Tee Higgins","WR","CIN",6,36.6,224.4,"High","",""],
+["Javonte Williams","RB","DAL",14,37.0,207.3,"High","",""],
+["Ladd McConkey","WR","LAC",7,37.7,228.2,"High","",""],
+["Travis Etienne Jr.","RB","NO",8,38.7,207.7,"High","",""],
+["Cam Skattebo","RB","NYG",8,38.8,201.2,"High","","Rookie"],
+["Brian Thomas Jr.","WR","JAX",7,40.0,195.4,"High","",""],
+["Davante Adams","WR","LAR",11,42.0,192.5,"High","",""],
+["Jameson Williams","WR","DET",6,44.5,206.2,"High","",""],
+["Bucky Irving","RB","TB",10,45.2,197.3,"Committee","",""],
+["Jaylen Waddle","WR","DEN",10,45.2,221.0,"High","",""],
+["D'Andre Swift","RB","CHI",10,45.8,208.0,"High","",""],
+["Terry McLaurin","WR","WAS",7,47.4,213.8,"Alpha","",""],
+["DJ Moore","WR","BUF",7,47.8,179.0,"Committee","",""],
+["Quinshon Judkins","RB","CLE",11,50.8,196.0,"High","",""],
+["Drake Maye","QB","NE",11,51.2,320.8,"Alpha","",""],
+["Bhayshul Tuten","RB","JAX",7,52.9,174.8,"Committee","",""],
+["Rome Odunze","WR","CHI",10,53.9,207.9,"High","",""],
+["Mike Evans","WR","SF",8,54.5,222.2,"High","","Team listing varies by source"],
+["Luther Burden III","WR","CHI",10,56.2,209.0,"High","",""],
+["Colston Loveland","TE","CHI",10,56.5,215.4,"High","",""],
+["Lamar Jackson","QB","BAL",13,56.6,326.0,"Alpha","",""],
+["Joe Burrow","QB","CIN",6,57.2,306.1,"Alpha","",""],
+["David Montgomery","RB","HOU",8,58.2,206.1,"Committee","",""],
+["Christian Watson","WR","GB",11,58.9,207.6,"High","",""],
+["Jaylen Warren","RB","PIT",9,59.0,170.6,"Committee","",""],
+["Xavier Worthy","WR","KC",5,60.0,161.5,"Committee","",""],
+["Jayden Reed","WR","GB",11,62.0,197.6,"High","",""],
+["TreVeyon Henderson","RB","NE",11,63.0,171.0,"Committee","Splits with Stevenson",""],
+["Rhamondre Stevenson","RB","NE",11,64.9,169.0,"Committee","",""],
+["Marvin Harrison Jr.","WR","ARI",14,65.0,186.2,"High","","Buy-low after down year"],
+["Dak Prescott","QB","DAL",14,65.1,303.9,"Alpha","",""],
+["Tyler Warren","TE","IND",13,65.2,201.1,"High","",""],
+["DK Metcalf","WR","PIT",9,66.0,183.3,"Alpha","",""],
+["Tony Pollard","RB","TEN",9,68.0,160.1,"Committee","",""],
+["Zach Charbonnet","RB","SEA",11,70.0,67.2,"Backup","Lead role if Price falters","Recovery timeline unclear"],
+["Deebo Samuel","WR","SF",8,70.0,155.7,"Committee","",""],
+["Jayden Daniels","QB","WAS",7,71.9,308.7,"Alpha","",""],
+["Courtland Sutton","WR","DEN",10,72.0,174.3,"High","",""],
+["Jerome Ford","RB","CLE",11,74.0,null,"Backup","Behind Judkins",""],
+["Jerry Jeudy","WR","CLE",11,75.0,119.6,"Committee","",""],
+["Kyle Pitts Sr.","TE","ATL",11,75.3,171.6,"High","",""],
+["Matthew Stafford","QB","LAR",11,77.1,280.2,"Alpha","",""],
+["Harold Fannin Jr.","TE","CLE",11,77.5,180.4,"High","","Rookie"],
+["Jordan Addison","WR","MIN",6,78.0,171.7,"Committee","",""],
+["Jalen Hurts","QB","PHI",10,78.4,310.5,"Alpha","",""],
+["Chuba Hubbard","RB","CAR",5,80.0,147.9,"Committee","",""],
+["Michael Pittman Jr.","WR","PIT",9,80.0,170.9,"Committee","","Team listing varies by source"],
+["Braelon Allen","RB","NYJ",13,82.0,null,"Backup","Behind Hall",""],
+["Keon Coleman","WR","BUF",7,82.0,85.8,"Rotational","",""],
+["Aaron Jones","RB","MIN",6,84.0,137.1,"Committee","",""],
+["Ray Davis","RB","BUF",7,85.0,65.1,"Backup","Handcuff to Cook",""],
+["Wan'Dale Robinson","WR","TEN",9,85.0,170.7,"High","","Team listing varies by source"],
+["Khalil Shakir","WR","BUF",7,87.0,170.7,"High","",""],
+["Brock Purdy","QB","SF",8,87.2,303.2,"Alpha","",""],
+["Josh Downs","WR","IND",13,88.0,172.3,"High","",""],
+["Jauan Jennings","WR","MIN",6,90.0,105.7,"Rotational","",""],
+["Caleb Williams","QB","CHI",10,90.2,299.3,"Alpha","",""],
+["Stefon Diggs","WR","WAS",7,91.0,157.3,"Committee","",""],
+["Trevor Lawrence","QB","JAX",7,91.4,303.4,"Alpha","",""],
+["Patrick Mahomes","QB","KC",5,92.0,286.7,"Alpha","",""],
+["Diontae Johnson","WR","CLE",11,95.0,null,"Rotational","",""],
+["Jonathon Brooks","RB","CAR",5,95.5,154.9,"Committee","Lead back if fully healthy",""],
+["Isiah Pacheco","RB","KC",5,97.0,null,"Backup","Behind Walker",""],
+["Tucker Kraft","TE","GB",11,98.1,174.4,"High","",""],
+["Bo Nix","QB","DEN",10,98.5,295.7,"Alpha","",""],
+["Najee Harris","RB","LAC",7,100.0,null,"Backup","Behind Hampton",""],
+["Ricky Pearsall","WR","SF",8,100.0,100.0,"Committee","",""],
+["Kyler Murray","QB","MIN",6,101.2,283.1,"Alpha","",""],
+["Justin Herbert","QB","LAC",7,103.4,295.5,"Alpha","",""],
+["Travis Kelce","TE","KC",5,104.0,171.4,"High","","Aging but productive"],
+["Romeo Doubs","WR","NE",11,105.0,161.2,"Committee","",""],
+["Tyrone Tracy Jr.","RB","NYG",8,105.0,111.3,"Committee","",""],
+["Dallas Goedert","TE","PHI",10,105.9,136.0,"Committee","",""],
+["Brian Robinson Jr.","RB","ATL",7,107.0,69.9,"Backup","Handcuff to Bijan",""],
+["J.J. McCarthy","QB","MIN",6,108.0,null,"Committee","",""],
+["Hollywood Brown","WR","KC",5,108.0,null,"Rotational","",""],
+["George Kittle","TE","SF",8,109.8,169.3,"High","",""],
+["Adonai Mitchell","WR","NYJ",13,110.0,98.3,"Rotational","",""],
+["Jordan Love","QB","GB",11,110.5,278.5,"Alpha","",""],
+["Jakobi Meyers","WR","JAX",7,112.0,169.3,"High","",""],
+["Rico Dowdle","RB","PIT",9,112.0,161.1,"Committee","",""],
+["Sam LaPorta","TE","DET",6,113.8,196.5,"High","",""],
+["Tyler Lockett","WR","TEN",9,115.0,null,"Rotational","",""],
+["Baker Mayfield","QB","TB",10,115.0,274.9,"Alpha","",""],
+["Jacory Croskey-Merritt","RB","WAS",7,115.0,127.9,"Committee","Could take over the backfield",""],
+["Jordan Mason","RB","MIN",6,117.0,153.7,"Committee","Role could grow past Jones",""],
+["Alexander Mattison","RB","LV",13,118.0,null,"Backup","Handcuff to Jeanty",""],
+["Darnell Mooney","WR","NYG",8,118.0,73.4,"Rotational","",""],
+["Cedric Tillman","WR","CLE",11,120.0,null,"Rotational","",""],
+["David Njoku","TE","CLE",11,120.0,null,"Committee","",""],
+["Geno Smith","QB","NYJ",13,120.0,222.5,"Alpha","",""],
+["Roschon Johnson","RB","CHI",10,122.0,null,"Backup","Handcuff to Swift",""],
+["Xavier Legette","WR","CAR",5,122.0,66.0,"Rotational","",""],
+["Anthony Richardson","QB","IND",13,124.0,null,"Committee","",""],
+["Tank Dell","WR","HOU",8,125.0,null,"Rotational","",""],
+["Evan Engram","TE","DEN",10,125.0,70.7,"Rotational","",""],
+["Kareem Hunt","RB","KC",5,125.0,null,"Backup","",""],
+["Zamir White","RB","LV",13,126.0,null,"Backup","",""],
+["Rashid Shaheed","WR","SEA",11,128.0,138.1,"Committee","","Post-hype sleeper"],
+["Justice Hill","RB","BAL",13,128.0,67.7,"Backup","Handcuff to Henry",""],
+["Blake Corum","RB","LAR",11,130.0,135.3,"Committee","Handcuff to Kyren",""],
+["Cade Otton","TE","TB",10,130.0,122.3,"Committee","",""],
+["Tyjae Spears","RB","TEN",9,131.0,114.6,"Committee","Pass-catching role in PPR",""],
+["MarShawn Lloyd","RB","GB",11,133.0,null,"Backup","Handcuff to Jacobs",""],
+["Emanuel Wilson","RB","GB",11,135.0,null,"Backup","",""],
+["Jonnu Smith","TE","PIT",9,135.0,null,"Committee","",""],
+["Kimani Vidal","RB","LAC",7,138.0,null,"Backup","",""],
+["Devin Singletary","RB","NYG",8,140.0,null,"Backup","",""],
+["Mark Andrews","TE","BAL",13,140.0,162.5,"Committee","",""],
+["Denver D/ST","DST","DEN",10,140.0,96.0,"","",""],
+["Pittsburgh D/ST","DST","PIT",9,142.0,88.0,"","",""],
+["Minnesota D/ST","DST","MIN",6,144.0,92.0,"","",""],
+["Pat Freiermuth","TE","PIT",9,145.0,128.4,"Committee","",""],
+["Philadelphia D/ST","DST","PHI",10,146.0,98.0,"","",""],
+["Dalton Kincaid","TE","BUF",7,147.0,163.6,"Committee","","Role unclear with Moore there"],
+["Baltimore D/ST","DST","BAL",13,148.0,95.0,"","",""],
+["Houston D/ST","DST","HOU",8,150.0,104.0,"","",""],
+["Isaiah Likely","TE","NYG",8,150.0,157.3,"Committee","",""],
+["San Francisco D/ST","DST","SF",8,152.0,84.0,"","",""],
+["Detroit D/ST","DST","DET",6,154.0,92.0,"","",""],
+["Chig Okonkwo","TE","WAS",7,155.0,144.1,"Committee","",""],
+["LA Chargers D/ST","DST","LAC",7,156.0,86.0,"","",""],
+["Green Bay D/ST","DST","GB",11,158.0,86.0,"","",""],
+["Buffalo D/ST","DST","BUF",7,160.0,84.0,"","",""],
+["Kansas City D/ST","DST","KC",5,162.0,87.0,"","",""],
+["Seattle D/ST","DST","SEA",11,164.0,103.0,"","",""],
+["NY Jets D/ST","DST","NYJ",13,166.0,64.0,"","",""],
+["Cleveland D/ST","DST","CLE",11,168.0,74.0,"","",""],
+["Dallas D/ST","DST","DAL",14,170.0,86.0,"","",""],
+["Arizona D/ST","DST","ARI",14,172.0,66.0,"","",""],
+["LA Rams D/ST","DST","LAR",11,174.0,106.0,"","",""],
+["Miami D/ST","DST","MIA",6,176.0,70.0,"","",""],
+["Cincinnati D/ST","DST","CIN",6,178.0,79.0,"","",""],
+["Indianapolis D/ST","DST","IND",13,180.0,84.0,"","",""],
+["Tampa Bay D/ST","DST","TB",10,182.0,81.0,"","",""],
+["Atlanta D/ST","DST","ATL",11,184.0,83.0,"","",""],
+["Chicago D/ST","DST","CHI",10,186.0,85.0,"","",""],
+["New England D/ST","DST","NE",11,188.0,92.0,"","",""],
+["Washington D/ST","DST","WAS",7,190.0,75.0,"","",""],
+["New Orleans D/ST","DST","NO",8,192.0,77.0,"","",""],
+["Jacksonville D/ST","DST","JAX",7,194.0,91.0,"","",""],
+["Las Vegas D/ST","DST","LV",13,196.0,65.0,"","",""],
+["NY Giants D/ST","DST","NYG",8,198.0,86.0,"","",""],
+["Carolina D/ST","DST","CAR",5,200.0,81.0,"","",""],
+["Tennessee D/ST","DST","TEN",9,202.0,67.0,"","",""],
+["Jaxson Dart","QB","NYG",8,null,296.5,"Alpha","",""],
+["Jared Goff","QB","DET",6,null,283.5,"Alpha","",""],
+["Tyler Shough","QB","NO",8,null,270.9,"Alpha","",""],
+["Malik Willis","QB","MIA",6,null,270.1,"Alpha","",""],
+["Sam Darnold","QB","SEA",11,null,262.7,"Alpha","",""],
+["C.J. Stroud","QB","HOU",8,null,247.8,"Alpha","",""],
+["Bryce Young","QB","CAR",5,null,235.6,"Alpha","",""],
+["Cam Ward","QB","TEN",9,null,227.8,"Alpha","","Weak line in front of him"],
+["Daniel Jones","QB","IND",13,null,223.5,"Alpha","",""],
+["Fernando Mendoza","QB","LV",13,null,212.2,"Alpha","","Rookie"],
+["Aaron Rodgers","QB","PIT",9,null,177.0,"Alpha","",""],
+["Jacoby Brissett","QB","ARI",14,null,160.0,"Alpha","",""],
+["Michael Penix","QB","ATL",11,null,143.2,"Committee","",""],
+["Parker Washington","WR","JAX",7,null,212.4,"High","",""],
+["Alec Pierce","WR","IND",13,null,177.9,"Committee","",""],
+["Carnell Tate","WR","TEN",9,null,177.3,"High","","Rookie"],
+["Chris Godwin","WR","TB",10,null,173.6,"Committee","",""],
+["Matthew Golden","WR","GB",11,null,170.1,"Committee","",""],
+["Makai Lemon","WR","PHI",10,null,168.5,"Committee","Rookie",""],
+["Michael Wilson","WR","ARI",14,null,166.0,"Committee","",""],
+["Jalen Coker","WR","CAR",5,null,165.9,"Committee","",""],
+["Quentin Johnston","WR","LAC",7,null,163.9,"Committee","",""],
+["KC Concepcion","WR","CLE",11,null,156.4,"Committee","Rookie",""],
+["Denzel Boston","WR","CLE",11,null,134.7,"Rotational","",""],
+["Jadarian Price","RB","SEA",11,null,170.0,"High","Rookie with a real path to touches",""],
+["J.K. Dobbins","RB","DEN",10,null,160.2,"Committee","","Runs behind a top-ranked line"],
+["Kyle Monangai","RB","CHI",10,null,154.6,"Committee","",""],
+["Kenny Gainwell","RB","TB",10,null,152.3,"Committee","",""],
+["RJ Harvey","RB","DEN",10,null,144.1,"Committee","Could win the Denver backfield",""],
+["Chris Rodriguez Jr.","RB","JAX",7,null,132.5,"Backup","",""],
+["Brenton Strange","TE","JAX",7,null,161.0,"High","",""],
+["Jake Ferguson","TE","DAL",14,null,159.8,"High","",""],
+["T.J. Hockenson","TE","MIN",6,null,155.0,"High","",""],
+["Hunter Henry","TE","NE",11,null,153.5,"Committee","",""],
+["Dalton Schultz","TE","HOU",8,null,150.9,"Committee","",""],
+["AJ Barner","TE","SEA",11,null,142.4,"Committee","",""],
+["Oronde Gadsden","TE","LAC",7,null,141.8,"Committee","",""],
+["Juwan Johnson","TE","NO",8,null,140.9,"Committee","",""]
+];
+
+var players=RAW.map(function(p,i){
+  return {id:i,name:p[0],pos:p[1],team:p[2],bye:p[3],adp:p[4],proj:p[5],
+          role:p[6],upside:p[7],note:p[8],drafted:false,target:false,bump:0,vol:0};
+});
+var ROLEW={Alpha:1,High:.72,Committee:.42,Rotational:.2,Backup:.15};
+players.forEach(function(p){p.vol=p.pos==='DST'?0:(ROLEW[p.role]!==undefined?ROLEW[p.role]:.4);});
+function byId(id){return players.filter(function(p){return p.id===id;})[0];}
+
+var REPL={},MAXVOR=1;
+function computeRepl(){
+  var fs={QB:0,RB:.5,WR:.5,TE:.1,DST:0};
+  POSN.forEach(function(pos){
+    var n=Math.round(CFG.teams*((CFG.start[pos]||0)+fs[pos]*CFG.flex));
+    var l=players.filter(function(p){return p.pos===pos&&p.proj!==null;})
+                 .map(function(p){return p.proj;}).sort(function(a,b){return b-a;});
+    REPL[pos]=l.length?(l[Math.min(Math.max(n,1),l.length-1)]||0):0;
+  });
+  MAXVOR=Math.max.apply(null,players.filter(function(p){return p.proj!==null;})
+    .map(function(p){return p.proj-(REPL[p.pos]||0);}))||1;
+}
+function vorOf(p){return p.proj===null?null:p.proj-(REPL[p.pos]||0);}
+
+var teamNames=[],draftLog=[],filter='ALL',sortBy='fit',search='',viewTeam=0,qsel=0,qm=[];
+var expand={depth:null,team:null,need:null};
+function ME(){return CFG.slot-1;}
+function benchN(){var s=0;POSN.forEach(function(p){s+=CFG.start[p]||0;});return Math.max(0,CFG.rounds-s-CFG.flex);}
+function totalPicks(){return CFG.teams*CFG.rounds;}
+function cur(){return draftLog.length;}
+function done(){return cur()>=totalPicks();}
+function teamAt(i){var r=Math.floor(i/CFG.teams),s=i%CFG.teams;return r%2===0?s:CFG.teams-1-s;}
+function myNums(){var a=[];for(var i=0;i<totalPicks();i++)if(teamAt(i)===ME())a.push(i+1);return a;}
+function upcoming(){var c=cur();return myNums().filter(function(n){return n-1>=c;});}
+function nextPick(){var u=upcoming();return u.length?u[0]:null;}
+function afterThis(){var u=upcoming();return u.length>1?u[1]:null;}
+function myTurn(){return !done()&&teamAt(cur())===ME();}
+function picksAway(){var n=nextPick();return n===null?null:(n-1)-cur();}
+function initNames(){
+  var o=[];
+  for(var i=0;i<CFG.teams;i++) o.push(teamNames[i]||(i===ME()?'My Team':'Team '+(i+1)));
+  teamNames=o.slice(0,CFG.teams);
+}
+
+// ════════════════════════════════════════════════════════════
+// ROOM MODEL - how this room actually drafts versus ADP
+// ════════════════════════════════════════════════════════════
+// Every timing estimate begins from national ADP, which assumes your league
+// drafts like the internet. It doesn't. This measures the real gap between
+// where players go and where ADP said, then shifts the survival curve to
+// match, and widens it as ADP loses its grip late in the draft.
+var ROOM={drift:0,spread:1,n:0,raw:0,rawsd:0,conf:0};
+function computeRoom(){
+  var obs=[];
+  draftLog.forEach(function(h){
+    if(h.playerId===null||h.playerId===undefined) return;
+    var p=byId(h.playerId);
+    if(!p||p.adp===null) return;
+    obs.push(p.adp-(h.pickIndex+1));   // positive = taken ahead of ADP
+  });
+  if(!obs.length){ROOM={drift:0,spread:1,n:0,raw:0,rawsd:0,conf:0};return;}
+  var w=obs.slice(-25),n=w.length,s=0,i;
+  for(i=0;i<n;i++) s+=w[i];
+  var m=s/n,v=0;
+  for(i=0;i<n;i++) v+=(w[i]-m)*(w[i]-m);
+  var sd=Math.sqrt(v/Math.max(1,n-1));
+  var conf=n/(n+12);                    // shrink toward ADP until we have evidence
+  var spread=1+conf*((sd/12)-1);
+  // Past the depth of the ADP list every remaining player "falls" by definition,
+  // which reads as a passive room when it is really the list running out.
+  // Beyond that horizon the measure is meaningless, so stop applying it.
+  var horizon=0;
+  players.forEach(function(p){if(p.adp!==null&&p.adp>horizon)horizon=p.adp;});
+  var stale=cur()>horizon*.8;
+  ROOM={drift:stale?0:Math.max(-25,Math.min(25,conf*m)),
+        spread:stale?1:Math.max(.7,Math.min(2.4,spread)),
+        n:obs.length,raw:m,rawsd:sd,conf:conf,stale:stale};
+}
+function ncdf(z){
+  var t=1/(1+.2316419*Math.abs(z)),d=.3989423*Math.exp(-z*z/2);
+  var p=d*t*(.3193815+t*(-.3565638+t*(1.781478+t*(-1.821256+t*1.330274))));
+  return z>0?1-p:p;
+}
+function survival(pl,n){
+  if(n===null||pl.adp===null) return null;
+  var eadp=pl.adp-ROOM.drift;                       // room-adjusted expectation
+  var sd=Math.max(5,pl.adp*.22)*ROOM.spread;
+  return Math.max(0,Math.min(1,1-ncdf((n-eadp)/sd)));
+}
+// How far ahead of ADP a logged pick went
+function reachOf(h){
+  if(h.playerId===null||h.playerId===undefined) return null;
+  var p=byId(h.playerId);
+  if(!p||p.adp===null) return null;
+  return p.adp-(h.pickIndex+1);
+}
+
+function picksOf(t){
+  return draftLog.filter(function(h){return h.teamIndex===t;}).map(function(h){
+    if(h.playerId!==null&&h.playerId!==undefined){
+      var p=byId(h.playerId);
+      return {name:p.name,pos:p.pos,team:p.team,bye:p.bye};
+    }
+    return {name:h.unlisted.name,pos:h.unlisted.pos,team:h.unlisted.team,bye:'-'};
+  });
+}
+function counts(t){
+  var c={QB:0,RB:0,WR:0,TE:0,DST:0,K:0};
+  picksOf(t).forEach(function(p){if(c[p.pos]!==undefined)c[p.pos]++;});
+  return c;
+}
+function rosterFull(t){return picksOf(t===undefined?ME():t).length>=CFG.rounds;}
+function canRoster(pos){
+  if(rosterFull()) return false;
+  var c=counts(ME());
+  return !(CFG.max[pos]!==undefined&&c[pos]>=CFG.max[pos]);
+}
+function gaps(t){
+  var c=counts(t),g={},sur=0;
+  POSN.forEach(function(p){g[p]=Math.max(0,(CFG.start[p]||0)-c[p]);});
+  FLEXOK.forEach(function(p){sur+=Math.max(0,c[p]-(CFG.start[p]||0));});
+  g.FLEX=Math.max(0,CFG.flex-sur);
+  return g;
+}
+function need(pos){
+  var c=counts(ME()),rd=Math.floor(cur()/CFG.teams)+1;
+  if(CFG.max[pos]!==undefined&&c[pos]>=CFG.max[pos]) return 0;
+  if(rosterFull()) return 0;
+  if(pos==='DST') return rd>=CFG.rounds-3?(c.DST<(CFG.start.DST||1)?1:0):(rd>=CFG.rounds-5?.2:0);
+  if(pos==='K') return 0;
+  if(pos==='QB'){
+    if(c.QB<(CFG.start.QB||1)) return rd>=4?.9:.45;
+    if((CFG.start.QB||1)>1) return c.QB<(CFG.start.QB+1)?.5:.05;
+    return .04;
+  }
+  if((CFG.start[pos]||0)-c[pos]>0) return 1;
+  if(FLEXOK.indexOf(pos)>-1){
+    var sur=0; FLEXOK.forEach(function(f){sur+=Math.max(0,c[f]-(CFG.start[f]||0));});
+    if(CFG.flex-sur>0) return pos==='TE'?.45:.7;
+    return pos==='TE'?.06:.3;
+  }
+  return .1;
+}
+function scarcity(pl){
+  if(pl.proj===null) return .3;
+  var n=players.filter(function(p){return !p.drafted&&p.pos===pl.pos&&p.proj!==null&&p.proj>=pl.proj;}).length;
+  if(n<=2) return 1; if(n<=4) return .75; if(n<=7) return .45; if(n<=12) return .2; return .05;
+}
+function fit(pl){
+  if(!canRoster(pl.pos)) return 0;
+  var v=[],w=[],a=afterThis(),vr=vorOf(pl);
+  if(vr!==null){v.push(Math.max(0,vr/MAXVOR));w.push(.34);}
+  v.push(pl.vol);w.push(.26);
+  v.push(scarcity(pl));w.push(.16);
+  var s=survival(pl,a);
+  if(s!==null){v.push(1-s);w.push(.13);}
+  if(pl.adp!==null){v.push(Math.max(0,Math.min(1,((pl.adp-(cur()+1))+14)/40)));w.push(.07);}
+  v.push(SOS[pl.team]==='easy'?1:(SOS[pl.team]==='hard'?0:.5));w.push(.04);
+  var tw=0,acc=0,i;
+  for(i=0;i<v.length;i++){acc+=v[i]*w[i];tw+=w[i];}
+  var q=(acc/tw)*(1+.15*(pl.bump||0));            // your own read, up to 2 steps each way
+  return Math.max(0,Math.min(100,100*q*(.15+.85*need(pl.pos))));
+}
+
+// Cost of waiting a round at each position
+function waitCost(pos){
+  var a=afterThis();
+  var av=players.filter(function(p){return !p.drafted&&p.pos===pos&&p.proj!==null&&canRoster(pos);})
+                .sort(function(x,y){return y.proj-x.proj;});
+  if(!av.length) return null;
+  var now=av[0],later=null;
+  if(a!==null){
+    for(var i=0;i<av.length;i++){
+      var s=survival(av[i],a);
+      if(s!==null&&s>=.5){later=av[i];break;}
+    }
+  }
+  return {pos:pos,now:now,later:later,cost:later?Math.round(now.proj-later.proj):null};
+}
+
+function rndOf(adp){
+  if(adp===null) return null;
+  var pk=Math.max(1,Math.round(adp));
+  var r=Math.floor((pk-1)/CFG.teams)+1,s=((pk-1)%CFG.teams)+1;
+  return r+'.'+(s<10?'0'+s:s);
+}
+function adpQueue(){
+  return players.filter(function(p){return !p.drafted;}).sort(function(a,b){
+    return (a.adp===null?9999:a.adp)-(b.adp===null?9999:b.adp);});
+}
+function qualityList(pos){
+  return players.filter(function(p){return !p.drafted&&p.pos===pos&&p.proj!==null&&p.proj>(REPL[pos]||0);})
+                .sort(function(a,b){return b.proj-a.proj;});
+}
+function qualityLeft(pos){return qualityList(pos).length;}
+function recentPos(n){
+  var c={QB:0,RB:0,WR:0,TE:0,DST:0,K:0};
+  draftLog.slice(-n).forEach(function(h){
+    var pos=h.playerId!==null&&h.playerId!==undefined?byId(h.playerId).pos:h.unlisted.pos;
+    if(c[pos]!==undefined)c[pos]++;
+  });
+  return c;
+}
+function alerts(){
+  var out=[],w=Math.min(10,draftLog.length),i;
+  // reach cascade - the panic pattern
+  var recent=draftLog.slice(-5),reaches=[];
+  recent.forEach(function(h){
+    var r=reachOf(h);
+    if(r!==null&&r>=REACH_PICKS) reaches.push({h:h,r:r,p:byId(h.playerId)});
+  });
+  if(reaches.length>=2){
+    out.push({t:'urgent',ic:'CASCADE',
+      x:reaches.length+' big reaches in the last 5 picks ('+reaches.map(function(x){return x.p.name+' '+Math.round(x.r)+' early';}).join(', ')+
+        '). Rooms do this in waves &mdash; assume the next few picks also come early and stop trusting ADP for anyone you actually want.'});
+  } else if(reaches.length===1){
+    out.push({t:'warn',ic:'REACH',
+      x:reaches[0].p.name+' went '+Math.round(reaches[0].r)+' picks ahead of ADP. Watch whether it starts a wave.'});
+  }
+  if(w>=5){
+    var rc=recentPos(w);
+    ['RB','WR','TE','QB'].forEach(function(pos){
+      if(rc[pos]>=Math.ceil(w*.5)&&rc[pos]>=4)
+        out.push({t:'warn',ic:'RUN',x:rc[pos]+' of the last '+w+' picks were '+pos+'.'});
+    });
+  }
+  ['RB','WR','TE'].forEach(function(pos){
+    if(need(pos)<.5) return;
+    var av=players.filter(function(p){return !p.drafted&&p.pos===pos&&p.proj!==null;})
+                  .sort(function(a,b){return b.proj-a.proj;});
+    if(av.length<2) return;
+    var drop=av[0].proj-av[Math.min(3,av.length-1)].proj;
+    if(drop>35) out.push({t:'warn',ic:'CLIFF',x:'Steep '+pos+' drop-off: after the next few, projections fall about '+Math.round(drop)+' points.'});
+  });
+  var a=afterThis();
+  if(a!==null){
+    var end=players.filter(function(p){var s=survival(p,a);return p.target&&!p.drafted&&s!==null&&s<.3;});
+    if(end.length) out.push({t:'urgent',ic:'TARGETS',
+      x:end.slice(0,3).map(function(p){return p.name;}).join(', ')+(end.length>3?' and others':'')+' likely gone before pick '+a+'.'});
+  }
+  return out.slice(0,4);
+}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');}
+
+
+// ════════════════════════════════════════════════════════════
+// PERSISTENCE
+// ════════════════════════════════════════════════════════════
+var st=null;
+function save(){
+  try{
+    localStorage.setItem(KEY,JSON.stringify({v:6,cfg:CFG,names:teamNames,
+      log:draftLog.map(function(h){return [h.pickIndex,h.playerId,h.unlisted,h.teamIndex];}),
+      tg:players.filter(function(p){return p.target;}).map(function(p){return p.id;}),
+      bm:players.filter(function(p){return p.bump;}).map(function(p){return [p.id,p.bump];})}));
+    var e=document.getElementById('saveInd');
+    e.classList.add('on'); clearTimeout(st);
+    st=setTimeout(function(){e.classList.remove('on');},900);
+  }catch(e){}
+}
+function load(){
+  try{
+    var r=localStorage.getItem(KEY); if(!r) return;
+    var d=JSON.parse(r); if(!d||d.v!==6) return;
+    if(d.cfg){CFG=d.cfg; if(!CFG.max) CFG.max={QB:3,RB:6,WR:6,TE:3,DST:3};}
+    teamNames=d.names||[];
+    draftLog=(d.log||[]).map(function(a){return {pickIndex:a[0],playerId:a[1],unlisted:a[2],teamIndex:a[3]};});
+    draftLog.forEach(function(h){
+      if(h.playerId!==null&&h.playerId!==undefined){var p=byId(h.playerId); if(p)p.drafted=true;}
+    });
+    (d.tg||[]).forEach(function(id){var p=byId(id); if(p)p.target=true;});
+    (d.bm||[]).forEach(function(a){var p=byId(a[0]); if(p)p.bump=a[1];});
+  }catch(e){}
+}
+
+// ════════════════════════════════════════════════════════════
+// SHARED BITS
+// ════════════════════════════════════════════════════════════
+function posBadge(pos){
+  return '<span class="pm" style="color:'+COL[pos]+';border-color:'+COL[pos]+'">'+pos+'</span>';
+}
+function svPill(p){
+  if(p===null) return '<span style="color:var(--dimr)">&mdash;</span>';
+  var n=Math.round(p*100);
+  return '<span class="sv '+(n<30?'lo':n<60?'mid':'')+'">'+n+'%</span>';
+}
+function rndCell(adp){
+  var v=rndOf(adp);
+  return v===null?'<span style="color:var(--dimr)">&mdash;</span>':'<span class="rnum">'+v+'</span>';
+}
+function bumpBtns(p){
+  return '<span style="display:inline-flex;gap:2px;">'+
+    '<button class="bump'+(p.bump>0?' up':'')+'" data-b="'+p.id+'" data-bv="1" title="Rate above consensus">&#9650;</button>'+
+    '<button class="bump'+(p.bump<0?' dn':'')+'" data-b="'+p.id+'" data-bv="-1" title="Rate below consensus">&#9660;</button></span>';
+}
+function drillTable(list){
+  if(!list.length) return '<div class="empty">Nobody left here.</div>';
+  var a=afterThis()||nextPick(),dis=done()?'disabled':'';
+  var rows=list.map(function(p){
+    var vr=vorOf(p);
+    return '<tr'+(p.target?' class="tg"':'')+' style="border-left:3px solid '+COL[p.pos]+'">'+
+      '<td style="width:28px;"><button class="star '+(p.target?'on':'')+'" data-s="'+p.id+'">'+(p.target?'\u2605':'\u2606')+'</button></td>'+
+      '<td class="pn">'+esc(p.name)+'</td><td>'+posBadge(p.pos)+'</td><td class="mono">'+p.team+'</td>'+
+      '<td>'+rndCell(p.adp)+'</td>'+
+      '<td class="mono">'+(p.proj===null?'&mdash;':Math.round(p.proj))+'</td>'+
+      '<td class="mono">'+(vr===null?'&mdash;':(vr>0?'+':'')+Math.round(vr))+'</td>'+
+      '<td>'+svPill(survival(p,a))+'</td>'+
+      '<td><button class="btn p s" data-d="'+p.id+'" '+dis+'>Log</button></td></tr>';
+  }).join('');
+  return '<div class="drills"><table><thead><tr><th></th><th>Player</th><th>Pos</th><th>Tm</th>'+
+    '<th>Rd</th><th>Proj</th><th>VOR</th><th>Lasts</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+}
+
+// ════════════════════════════════════════════════════════════
+// RENDER
+// ════════════════════════════════════════════════════════════
+function drawHeader(){
+  var i=cur(),d=done();
+  document.getElementById('hRnd').textContent=d?'-':Math.floor(i/CFG.teams)+1;
+  document.getElementById('hPick').textContent=d?'-':i+1;
+  document.getElementById('hName').textContent=d?'Complete':teamNames[teamAt(i)];
+  var m=myTurn();
+  document.getElementById('pip').className='pip'+(m?' me':'');
+  document.getElementById('hUp').innerHTML=m?'<span class="upnow">YOU ARE UP</span>':'';
+  var n=nextPick();
+  document.getElementById('hNext').textContent=n===null?'-':n;
+  document.getElementById('btnUndo').disabled=!draftLog.length;
+  document.getElementById('progf').style.width=Math.min(100,(i/totalPicks())*100)+'%';
+  var tc=players.filter(function(p){return p.target&&!p.drafted;}).length;
+  var tb=document.getElementById('bTgt');
+  tb.textContent=tc;
+  var a=afterThis();
+  var risky=a===null?0:players.filter(function(p){var s=survival(p,a);return p.target&&!p.drafted&&s!==null&&s<.5;}).length;
+  tb.className='bdg'+(risky?' hot':'');
+  document.getElementById('advPick').textContent=d?'':'pick '+(i+1);
+  document.getElementById('rosterCx').textContent=picksOf(ME()).length+'/'+CFG.rounds;
+}
+
+var buzzed=-1;
+function drawNudge(){
+  var el=document.getElementById('nudge'),away=picksAway();
+  if(done()||away===null||away>2){el.hidden=true;return;}
+  el.hidden=false;
+  if(away===0){
+    el.className='nudge now';
+    el.innerHTML='<span>YOU ARE ON THE CLOCK</span><span style="font-size:11px;font-weight:600;">pick '+(cur()+1)+'</span>';
+  } else {
+    el.className='nudge';
+    el.innerHTML='<span>'+away+' pick'+(away===1?'':'s')+' until you are up</span>'+
+      '<span style="font-size:11px;font-weight:600;">your pick '+nextPick()+'</span>';
+  }
+  if(away<=2&&buzzed!==cur()){
+    buzzed=cur();
+    try{ if(navigator&&navigator.vibrate) navigator.vibrate(away===0?[90,60,90]:60); }catch(e){}
+  }
+}
+
+function drawStrip(){
+  var e=document.getElementById('strip'); e.innerHTML='';
+  if(!draftLog.length){e.innerHTML='<span class="stl">No picks logged yet</span>';return;}
+  var lab=document.createElement('span'); lab.className='stl'; lab.textContent='Last picks';
+  e.appendChild(lab);
+  draftLog.slice(-5).reverse().forEach(function(h){
+    var nm,pos;
+    if(h.playerId!==null&&h.playerId!==undefined){var p=byId(h.playerId);nm=p.name;pos=p.pos;}
+    else {nm=h.unlisted.name;pos=h.unlisted.pos;}
+    var r=reachOf(h),isReach=r!==null&&r>=REACH_PICKS;
+    var d=document.createElement('div');
+    d.className='sp'+(isReach?' reach':'');
+    if(!isReach) d.style.borderLeftColor=COL[pos]||'var(--ln)';
+    d.innerHTML='<span class="n">'+(h.pickIndex+1)+'</span><span>'+esc(nm)+'</span>'+
+      (isReach?'<span class="rx">+'+Math.round(r)+' early</span>':'');
+    e.appendChild(d);
+  });
+}
+
+function drawAlerts(){
+  var A=alerts(),card=document.getElementById('alertCard'),b=document.getElementById('alerts');
+  if(!A.length){card.hidden=true;return;}
+  card.hidden=false; b.innerHTML='';
+  A.forEach(function(a){
+    var d=document.createElement('div'); d.className='al '+a.t;
+    d.innerHTML='<span class="ic">'+a.ic+'</span><span>'+a.x+'</span>';
+    b.appendChild(d);
+  });
+}
+
+function drawGaps(){
+  var e=document.getElementById('gaps'); e.innerHTML='';
+  var c=counts(ME()),g=gaps(ME());
+  POSN.forEach(function(pos){
+    var d=document.createElement('div');
+    d.className='gp'+(g[pos]>0?' need':'');
+    d.style.borderLeftColor=COL[pos];
+    d.innerHTML='<span class="gl">'+pos+'</span><span class="gn">'+c[pos]+'</span>'+
+      (g[pos]>0?'<span style="font-size:9.5px;color:var(--ac)">need '+g[pos]+'</span>':'');
+    e.appendChild(d);
+  });
+  if(g.FLEX>0){
+    var f=document.createElement('div'); f.className='gp need';
+    f.innerHTML='<span class="gl">Flex</span><span style="font-size:9.5px;color:var(--ac)">need '+g.FLEX+'</span>';
+    e.appendChild(f);
+  }
+}
+
+function drawRecs(){
+  var g=document.getElementById('recs'); g.innerHTML='';
+  if(done()){g.innerHTML='<div class="empty">Draft complete. Rosters are on the Insights tab.</div>';return;}
+  var av=players.filter(function(p){return !p.drafted&&canRoster(p.pos);});
+  if(!av.length){g.innerHTML='<div class="empty">Roster full at every position you can still add.</div>';return;}
+  av.forEach(function(p){p._f=fit(p);});
+  av.sort(function(a,b){return b._f-a._f;});
+  var a=afterThis();
+  av.slice(0,6).forEach(function(p,i){
+    var d=document.createElement('div');
+    d.className='rec'+(i===0?' top':'');
+    d.style.borderLeftColor=COL[p.pos];
+    var why=[],c=counts(ME()),vr=vorOf(p);
+    var gp=(CFG.start[p.pos]||0)-(c[p.pos]||0);
+    if(gp>0) why.push(['key','Fills a starting '+p.pos+' slot']);
+    if(vr!==null&&vr>20) why.push(['','+'+Math.round(vr)+' over a replacement '+p.pos]);
+    if(p.role==='Alpha') why.push(['','Focal point of his offense']);
+    else if(p.role==='Committee'||p.role==='Rotational'||p.role==='Backup') why.push(['','Split role - '+p.role.toLowerCase()]);
+    if(p.upside) why.push(['warn',p.upside]);
+    var s=survival(p,a);
+    if(s!==null&&s<.3) why.push(['warn','Only '+Math.round(s*100)+'% he lasts to '+a]);
+    else if(s!==null&&s>.65) why.push(['',Math.round(s*100)+'% he is there at '+a]);
+    if(p.bump) why.push(['key','Your read: '+(p.bump>0?'above':'below')+' consensus']);
+    if(p.note) why.push(['warn',p.note]);
+    d.innerHTML='<span class="rrk">'+(i+1)+'</span><div class="rmain">'+
+      '<div class="rnm">'+esc(p.name)+'</div>'+
+      '<div class="rmeta">'+posBadge(p.pos)+' '+p.team+' &middot; bye '+p.bye+
+      (p.adp===null?'':' &middot; rd '+rndOf(p.adp))+
+      (p.proj===null?'':' &middot; '+Math.round(p.proj)+'pt')+'</div>'+
+      '<div class="rwhy">'+why.slice(0,4).map(function(x){return '<div class="'+x[0]+'">'+x[1]+'</div>';}).join('')+'</div></div>'+
+      '<div class="rside"><span class="score">'+Math.round(p._f)+'</span>'+
+      '<button class="btn p s" data-d="'+p.id+'">Log</button>'+
+      '<button class="star '+(p.target?'on':'')+'" data-s="'+p.id+'">'+(p.target?'\u2605':'\u2606')+'</button></div>';
+    g.appendChild(d);
+  });
+  wire(g);
+}
+
+function drawWait(){
+  var e=document.getElementById('waitCost'); e.innerHTML='';
+  var rows=[],mx=1;
+  POSN.forEach(function(pos){
+    if(!canRoster(pos)) return;
+    var w=waitCost(pos);
+    if(!w) return;
+    rows.push(w);
+    if(w.cost!==null&&w.cost>mx) mx=w.cost;
+  });
+  if(!rows.length){e.innerHTML='<div class="empty">Nothing left to weigh.</div>';return;}
+  rows.sort(function(a,b){return (b.cost===null?9999:b.cost)-(a.cost===null?9999:a.cost);});
+  rows.forEach(function(w){
+    var d=document.createElement('div'); d.className='wc';
+    var txt,col,pct;
+    if(w.cost===null){txt='all gone';col='var(--urg)';pct=100;}
+    else {txt=(w.cost>0?'-':'')+w.cost+' pts';col=w.cost>=25?'var(--urg)':w.cost>=10?'var(--ac)':'var(--ln2)';pct=Math.min(100,(w.cost/mx)*100);}
+    d.innerHTML='<span class="wcp" style="color:'+COL[w.pos]+'">'+w.pos+'</span>'+
+      '<span class="wcb"><span class="wcf" style="width:'+pct+'%;background:'+col+'"></span></span>'+
+      '<span class="wcv" style="color:'+(w.cost>=25?'var(--urg)':'var(--dim)')+'">'+txt+'</span>';
+    e.appendChild(d);
+  });
+  var top=rows[0];
+  var n=document.createElement('div'); n.className='wcn';
+  if(top.cost===null) n.textContent='Nothing at '+top.pos+' is likely to survive to your next pick.';
+  else if(top.cost>=25) n.textContent='Waiting on '+top.pos+' costs about '+top.cost+' points. That is the position to attack now.';
+  else n.textContent='No position costs much to wait on right now. Take the best player.';
+  e.appendChild(n);
+}
+
+function drawRoom(){
+  var e=document.getElementById('room');
+  var d=ROOM.raw,n=ROOM.n;
+  if(ROOM.stale){
+    e.innerHTML='<div class="rmt">The draft has gone past the depth of the ADP list, so the room read no longer means anything &mdash; '+
+      'every player left "falls" by definition. Timing estimates are back to face value. At this stage you are on your own read anyway.</div>';
+    return;
+  }
+  if(n<6){
+    e.innerHTML='<div class="rmt">Not enough picks yet to read the room. Timing estimates are using national ADP as-is. '+
+      'This sharpens after about a dozen picks.</div>';
+    return;
+  }
+  var dir=d>0?'ahead of':'behind',mag=Math.abs(d);
+  var cls=mag>=12?'hot':mag>=5?'warm':'';
+  var txt;
+  if(mag<3) txt='This room is tracking ADP closely. Timing estimates are close to face value.';
+  else if(d>0) txt='Players are going about '+Math.round(mag)+' picks earlier than ADP says. Every survival number below has been tightened to match &mdash; assume anyone you want disappears sooner than the raw ADP suggests.';
+  else txt='Players are lasting about '+Math.round(mag)+' picks longer than ADP says. You can afford to wait a little more than the raw numbers imply.';
+  e.innerHTML='<div><div class="rmv '+cls+'">'+(d>0?'+':'')+Math.round(d)+'</div>'+
+    '<div style="font-size:8.5px;letter-spacing:1.2px;text-transform:uppercase;color:var(--dimr)">picks '+dir+' ADP</div></div>'+
+    '<div class="rmt">'+txt+'<br><span style="color:var(--dimr);font-size:10.5px;">'+n+' picks measured'+
+    (ROOM.conf<.5?' &middot; still a weak read':'')+' &middot; spread &times;'+ROOM.spread.toFixed(2)+'</span></div>';
+}
+
+function drawAtRisk(){
+  var e=document.getElementById('atRisk'); e.innerHTML='';
+  var a=afterThis();
+  var tg=players.filter(function(p){return p.target&&!p.drafted;});
+  if(!tg.length){e.innerHTML='<div class="empty">No targets starred. Star players on the Players tab to track them.</div>';return;}
+  var risky=tg.map(function(p){return {p:p,s:survival(p,a)};})
+    .filter(function(x){return x.s!==null&&x.s<.5;})
+    .sort(function(x,y){return x.s-y.s;});
+  if(!risky.length){
+    e.innerHTML='<div class="empty">All '+tg.length+' targets look likely to survive to pick '+(a===null?'?':a)+'.</div>';
+    return;
+  }
+  var dis=done()?'disabled':'';
+  risky.slice(0,6).forEach(function(x){
+    var d=document.createElement('div'); d.className='wc';
+    d.style.borderLeft='3px solid '+COL[x.p.pos];
+    d.innerHTML='<span style="flex:1;min-width:0;font-size:12.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+
+      esc(x.p.name)+' <span style="font-size:10px;color:var(--dimr);font-weight:400;">'+x.p.pos+'</span></span>'+
+      svPill(x.s)+'<button class="btn p s" data-d="'+x.p.id+'" '+dis+'>Log</button>';
+    e.appendChild(d);
+  });
+  wire(e);
+}
+
+function drawPlayers(){
+  var l=players.filter(function(p){return !p.drafted;});
+  if(filter!=='ALL') l=l.filter(function(p){return p.pos===filter;});
+  if(search.trim()) l=l.filter(function(p){return p.name.toLowerCase().indexOf(search.toLowerCase())>-1;});
+  var a=afterThis()||nextPick();
+  l.forEach(function(p){p._f=fit(p);p._s=survival(p,a);});
+  if(sortBy==='fit') l.sort(function(x,y){return y._f-x._f;});
+  else if(sortBy==='adp') l.sort(function(x,y){return (x.adp===null?9999:x.adp)-(y.adp===null?9999:y.adp);});
+  else if(sortBy==='proj') l.sort(function(x,y){return (y.proj===null?-1:y.proj)-(x.proj===null?-1:x.proj);});
+  else if(sortBy==='vor') l.sort(function(x,y){var a1=vorOf(y),b1=vorOf(x);return (a1===null?-9999:a1)-(b1===null?-9999:b1);});
+  else if(sortBy==='surv') l.sort(function(x,y){return (x._s===null?2:x._s)-(y._s===null?2:y._s);});
+  else l.sort(function(x,y){return x.name.localeCompare(y.name);});
+
+  var tb=document.getElementById('ptb'),mc=document.getElementById('pmc');
+  tb.innerHTML=''; mc.innerHTML='';
+  if(!l.length){
+    tb.innerHTML='<tr><td colspan="13" class="empty">Nobody matches.</td></tr>';
+    mc.innerHTML='<div class="empty">Nobody matches.</div>'; return;
+  }
+  var dis=done()?'disabled':'';
+  l.forEach(function(p){
+    var cap=!canRoster(p.pos),vr=vorOf(p);
+    var tr=document.createElement('tr');
+    tr.className=(p.target?'tg':'')+(cap?' capped':'');
+    tr.style.borderLeft='3px solid '+COL[p.pos];
+    tr.innerHTML='<td><button class="star '+(p.target?'on':'')+'" data-s="'+p.id+'">'+(p.target?'\u2605':'\u2606')+'</button></td>'+
+      '<td class="pn">'+esc(p.name)+'</td><td>'+posBadge(p.pos)+'</td><td class="mono">'+p.team+'</td>'+
+      '<td class="mono">'+p.bye+'</td><td>'+rndCell(p.adp)+'</td>'+
+      '<td class="mono">'+(p.adp===null?'&mdash;':p.adp.toFixed(1))+'</td>'+
+      '<td class="mono">'+(p.proj===null||p.pos==='DST'?'&mdash;':Math.round(p.proj))+'</td>'+
+      '<td class="mono">'+(vr===null||p.pos==='DST'?'&mdash;':(vr>0?'+':'')+Math.round(vr))+'</td>'+
+      '<td class="role">'+(p.role||'&mdash;')+'</td><td>'+svPill(p._s)+'</td>'+
+      '<td>'+bumpBtns(p)+'</td>'+
+      '<td><button class="btn p s" data-d="'+p.id+'" '+dis+'>Log</button></td>';
+    tb.appendChild(tr);
+
+    var d=document.createElement('div');
+    d.className='mc'+(p.target?' tg':'')+(cap?' capped':'');
+    d.style.borderLeftColor=COL[p.pos];
+    d.innerHTML='<button class="star '+(p.target?'on':'')+'" data-s="'+p.id+'">'+(p.target?'\u2605':'\u2606')+'</button>'+
+      '<div class="mcl"><div class="mcn">'+esc(p.name)+'</div><div class="mcm">'+posBadge(p.pos)+
+      '<span>'+p.team+'</span><span>bye '+p.bye+'</span>'+
+      (p.adp===null?'':'<span>rd '+rndOf(p.adp)+'</span>')+
+      (vr===null||p.pos==='DST'?'':'<span>vor '+(vr>0?'+':'')+Math.round(vr)+'</span>')+'</div></div>'+
+      '<div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end;">'+svPill(p._s)+
+      '<button class="btn p s" data-d="'+p.id+'" '+dis+'>Log</button>'+bumpBtns(p)+'</div>';
+    mc.appendChild(d);
+  });
+  wire(tb); wire(mc);
+}
+
+function drawTargets(){
+  var host=document.getElementById('tgtGroups'); host.innerHTML='';
+  var tg=players.filter(function(p){return p.target&&!p.drafted;});
+  if(!tg.length){
+    host.innerHTML='<div class="card"><div class="empty">Nothing starred yet. Tap the star beside any player to track him here.</div></div>';
+    return;
+  }
+  var up=upcoming().slice(0,4),dis=done()?'disabled':'';
+  POSN.forEach(function(pos){
+    var g=tg.filter(function(p){return p.pos===pos;});
+    if(!g.length) return;
+    g.sort(function(a,b){return (a.adp===null?9999:a.adp)-(b.adp===null?9999:b.adp);});
+    var cols=''; for(var i=0;i<4;i++) cols+='<th>'+(up[i]!==undefined?'pk '+up[i]:'&mdash;')+'</th>';
+    var rows=g.map(function(p){
+      var cells='';
+      for(var i=0;i<4;i++) cells+='<td>'+(up[i]!==undefined?svPill(survival(p,up[i])):'<span style="color:var(--dimr)">&mdash;</span>')+'</td>';
+      var safe=-1,has=p.adp!==null;
+      for(var j=0;j<up.length;j++){var sj=survival(p,up[j]); if(sj!==null&&sj>=.5) safe=j;}
+      var v=!has?'<span style="color:var(--dimr)">no ADP</span>'
+        :safe===-1?'<span style="color:var(--urg)">take now or lose him</span>'
+        :safe===0?'<span style="color:var(--ac)">take at '+up[0]+'</span>'
+        :'<span style="color:var(--dim)">can wait to '+up[safe]+'</span>';
+      return '<tr class="tg" style="border-left:3px solid '+COL[pos]+'">'+
+        '<td style="width:28px;"><button class="star on" data-s="'+p.id+'">\u2605</button></td>'+
+        '<td class="pn">'+esc(p.name)+'</td><td class="mono">'+p.team+'</td>'+
+        '<td>'+rndCell(p.adp)+'</td>'+
+        '<td class="mono">'+(p.proj===null?'&mdash;':Math.round(p.proj))+'</td>'+cells+
+        '<td style="font-size:11px;">'+v+'</td>'+
+        '<td><button class="btn p s" data-d="'+p.id+'" '+dis+'>Log</button></td></tr>';
+    }).join('');
+    var c=document.createElement('div'); c.className='card';
+    c.innerHTML='<div class="ch"><h3 style="color:'+COL[pos]+'">'+pos+'</h3><span class="cx">'+g.length+'</span></div>'+
+      '<div class="tw"><table><thead><tr><th></th><th style="width:22%">Player</th><th>Tm</th><th>Rd</th><th>Proj</th>'+
+      cols+'<th>Verdict</th><th></th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+    host.appendChild(c); wire(c);
+  });
+}
+
+function drawFlow(){
+  var host=document.getElementById('flowBody'); host.innerHTML='';
+  var q=adpQueue(),qi=0,c0=cur();
+  for(var r=0;r<CFG.rounds;r++){
+    var first=r*CFG.teams+1,last=(r+1)*CFG.teams,mineIn=[];
+    for(var k=first-1;k<last;k++) if(teamAt(k)===ME()) mineIn.push(k+1);
+    var h=document.createElement('div'); h.className='fh';
+    h.innerHTML='<span><b>Round '+(r+1)+'</b> &nbsp;picks '+first+'&ndash;'+last+'</span>'+
+      '<span>'+(mineIn.length?'you pick '+mineIn.join(' &amp; '):'')+'</span>';
+    host.appendChild(h);
+    for(var s=0;s<CFG.teams;s++){
+      var idx=r*CFG.teams+s, mine=teamAt(idx)===ME();   // straight down: 1,2,3... never reversed
+      var row=document.createElement('div');
+      var lg=draftLog.filter(function(x){return x.pickIndex===idx;})[0];
+      if(lg){
+        var nm,pos,tm;
+        if(lg.playerId!==null&&lg.playerId!==undefined){var pl=byId(lg.playerId);nm=pl.name;pos=pl.pos;tm=pl.team;}
+        else {nm=lg.unlisted.name;pos=lg.unlisted.pos;tm=lg.unlisted.team;}
+        var rc=reachOf(lg),isR=rc!==null&&rc>=REACH_PICKS;
+        row.className='fr'+(mine?' mine':'')+(isR?' reach':'');
+        if(!isR) row.style.borderLeftColor=COL[pos]||'transparent';
+        row.innerHTML='<span class="fno">'+(idx+1)+'</span><span class="fteam">'+esc(teamNames[teamAt(idx)])+'</span>'+
+          '<span class="fpl"><b>'+esc(nm)+'</b> <span style="color:var(--dimr);font-size:10.5px;">'+tm+'</span>'+
+          (isR?' <span style="color:var(--urg);font-size:10px;font-weight:700;">+'+Math.round(rc)+' early</span>':'')+'</span>'+
+          posBadge(pos)+'<button class="fedit" data-e="'+idx+'">&#9998;</button>';
+      } else if(idx===c0){
+        row.className='fr cur'+(mine?' mine':'');
+        row.innerHTML='<span class="fno">'+(idx+1)+'</span><span class="fteam">'+esc(teamNames[teamAt(idx)])+'</span>'+
+          '<span class="fpl" style="color:var(--ac);font-weight:800;letter-spacing:.5px;">ON THE CLOCK</span>';
+      } else {
+        var pr=q[qi++];
+        row.className='fr proj'+(mine?' mine':'');
+        if(pr){
+          row.style.borderLeftColor=COL[pr.pos]||'transparent';
+          row.innerHTML='<span class="fno">'+(idx+1)+'</span><span class="fteam">'+esc(teamNames[teamAt(idx)])+'</span>'+
+            '<span class="fpl">'+esc(pr.name)+' <span style="color:var(--dimr);font-size:10.5px;">'+pr.team+'</span></span>'+
+            posBadge(pr.pos)+'<button class="star '+(pr.target?'on':'')+'" data-s="'+pr.id+'">'+(pr.target?'\u2605':'\u2606')+'</button>';
+        } else {
+          row.innerHTML='<span class="fno">'+(idx+1)+'</span><span class="fteam">'+esc(teamNames[teamAt(idx)])+'</span>'+
+            '<span class="fpl" style="color:var(--dimr)">&mdash;</span>';
+        }
+      }
+      host.appendChild(row);
+    }
+  }
+  wire(host);
+}
+
+function drawBoard(){
+  var t=document.getElementById('bg'); t.innerHTML='';
+  var th=document.createElement('thead'),hr=document.createElement('tr');
+  hr.innerHTML='<th style="min-width:30px;">R</th>';
+  for(var i=0;i<CFG.teams;i++){
+    var h=document.createElement('th');
+    if(i===ME()) h.className='mine';
+    h.textContent=teamNames[i];
+    hr.appendChild(h);
+  }
+  th.appendChild(hr); t.appendChild(th);
+  var tb=document.createElement('tbody'),c=cur();
+  for(var r=0;r<CFG.rounds;r++){
+    var tr=document.createElement('tr'),rl=document.createElement('td');
+    rl.className='rl'; rl.textContent=r+1; tr.appendChild(rl);
+    for(var q2=0;q2<CFG.teams;q2++){
+      var s=(r%2===0)?q2:CFG.teams-1-q2, idx=r*CFG.teams+s, td=document.createElement('td');
+      var pk=draftLog.filter(function(h2){return h2.pickIndex===idx;})[0];
+      if(pk){
+        var lbl,pos;
+        if(pk.playerId!==null&&pk.playerId!==undefined){var pl=byId(pk.playerId);lbl=pl.name;pos=pl.pos;}
+        else {lbl=pk.unlisted.name;pos=pk.unlisted.pos;}
+        var rc=reachOf(pk),isR=rc!==null&&rc>=REACH_PICKS;
+        td.className='bcell'+(q2===ME()?' bmine':'');
+        td.style.borderLeftColor=COL[pos]||'transparent';
+        td.setAttribute('data-e',idx);
+        td.innerHTML='<span class="bno'+(isR?' breach':'')+'">'+(idx+1)+(isR?' \u2191':'')+'</span>'+esc(lbl);
+      } else if(idx===c){
+        td.className='bcur'; td.innerHTML='<span class="bno">'+(idx+1)+'</span><b style="color:var(--ac)">NOW</b>';
+      } else {
+        td.className=(q2===ME()?'bmine':'');
+        td.innerHTML='<span class="bno">'+(idx+1)+'</span><span style="color:var(--dimr)">&mdash;</span>';
+      }
+      tr.appendChild(td);
+    }
+    tb.appendChild(tr);
+  }
+  t.appendChild(tb);
+  Array.prototype.forEach.call(t.querySelectorAll('[data-e]'),function(el){
+    el.addEventListener('click',function(){openEdit(parseInt(el.getAttribute('data-e'),10));});
+  });
+}
+
+// ── Insights ──
+function drawNeeds(){
+  var e=document.getElementById('needGrid'); e.innerHTML='';
+  var upNext=[],c0=cur(),nx=nextPick();
+  for(var i=c0;i<(nx===null?c0:nx-1);i++) upNext.push(teamAt(i));
+  for(var t=0;t<CFG.teams;t++){
+    (function(ti){
+      var g=gaps(ti),open=expand.need===ti;
+      var d=document.createElement('div');
+      d.className='nt'+(ti===ME()?' me':'')+(open?' open':'');
+      var chips='';
+      POSN.forEach(function(p){if(g[p]>0)chips+='<span class="np gap">'+p+' \u00d7'+g[p]+'</span>';});
+      if(g.FLEX>0) chips+='<span class="np gap">FLEX \u00d7'+g.FLEX+'</span>';
+      if(!chips) chips='<span class="np">starters set</span>';
+      d.innerHTML='<div class="ntn"><span>'+esc(teamNames[ti])+'</span>'+
+        (upNext.indexOf(ti)>-1?'<span style="color:var(--ac);font-size:9px;">before you</span>':'')+
+        '</div><div class="ntp">'+chips+'</div>';
+      d.addEventListener('click',function(){expand.need=open?null:ti;drawNeeds();});
+      e.appendChild(d);
+    })(t);
+  }
+  var host=document.getElementById('needDetail'); host.innerHTML='';
+  if(expand.need!==null&&expand.need<CFG.teams){
+    var ti=expand.need,g=gaps(ti),wants=[];
+    POSN.forEach(function(p){if(g[p]>0)wants.push(p);});
+    if(g.FLEX>0) FLEXOK.forEach(function(p){if(wants.indexOf(p)<0)wants.push(p);});
+    if(!wants.length) wants=POSN.slice();
+    var pool=players.filter(function(p){return !p.drafted&&wants.indexOf(p.pos)>-1;});
+    pool.sort(function(a,b){var av=vorOf(a),bv=vorOf(b);return (bv===null?-9999:bv)-(av===null?-9999:av);});
+    var w=document.createElement('div'); w.className='drill';
+    w.innerHTML='<div class="drillh"><span>Likely targets for '+esc(teamNames[ti])+'</span><span>'+
+      (wants.length?'needs '+wants.join(', '):'set')+'</span></div>'+drillTable(pool.slice(0,12));
+    host.appendChild(w); wire(w);
+  }
+}
+function drawDepth(){
+  var e=document.getElementById('depthBars'); e.innerHTML='';
+  var vals=POSN.map(function(p){return {pos:p,n:qualityLeft(p)};});
+  var mx=Math.max.apply(null,vals.map(function(v){return v.n;}))||1;
+  vals.forEach(function(v){
+    var open=expand.depth===v.pos;
+    var d=document.createElement('div'); d.className='hbar clk';
+    d.innerHTML='<span class="hbx">'+(open?'\u25be':'\u25b8')+'</span><span class="hbl">'+v.pos+'</span>'+
+      '<span class="hbt"><span class="hbs" style="width:'+(v.n/mx*100)+'%;background:'+COL[v.pos]+'"></span></span>'+
+      '<span class="hbv">'+v.n+'</span>';
+    d.addEventListener('click',function(){expand.depth=open?null:v.pos;drawDepth();});
+    e.appendChild(d);
+    if(open){
+      var w=document.createElement('div'); w.className='drill';
+      var list=qualityList(v.pos);
+      w.innerHTML='<div class="drillh"><span>'+v.pos+' above replacement ('+Math.round(REPL[v.pos]||0)+' pts)</span>'+
+        '<span>'+list.length+'</span></div>'+drillTable(list);
+      e.appendChild(w); wire(w);
+    }
+  });
+  var h=document.createElement('div');
+  h.style.cssText='font-size:10px;color:var(--dimr);margin-top:7px;';
+  h.textContent='Tap a bar to see who is left.';
+  e.appendChild(h);
+}
+function drawDrain(){
+  var svg=document.getElementById('drainSvg'),lg=document.getElementById('drainLgnd');
+  svg.innerHTML=''; lg.innerHTML='';
+  if(cur()<CFG.teams){
+    svg.innerHTML='<text x="350" y="62" text-anchor="middle" fill="#5f5f5f" font-size="12" font-family="system-ui">Needs one full round of picks</text>';
+    return;
+  }
+  var rounds=Math.floor(cur()/CFG.teams)+1,series={};
+  POSN.forEach(function(p){series[p]=[];});
+  for(var r=0;r<=rounds;r++){
+    var upto=Math.min(r*CFG.teams,cur()),gone={};
+    draftLog.slice(0,upto).forEach(function(h){if(h.playerId!==null&&h.playerId!==undefined)gone[h.playerId]=1;});
+    POSN.forEach(function(p){
+      series[p].push(players.filter(function(x){
+        return !gone[x.id]&&x.pos===p&&x.proj!==null&&x.proj>(REPL[p]||0);}).length);
+    });
+  }
+  var W=700,H=120,pad=5,mx=1;
+  POSN.forEach(function(p){series[p].forEach(function(v){if(v>mx)mx=v;});});
+  var np=series.QB.length;
+  POSN.forEach(function(p){
+    if(p==='DST') return;
+    var pts=series[p].map(function(v,i){
+      return (pad+(i/(np-1||1))*(W-pad*2)).toFixed(1)+','+(H-pad-(v/mx)*(H-pad*2)).toFixed(1);
+    }).join(' ');
+    svg.innerHTML+='<polyline points="'+pts+'" fill="none" stroke="'+COL[p]+'" stroke-width="2" stroke-linejoin="round"/>';
+    lg.innerHTML+='<span class="lgi"><span class="lgs" style="background:'+COL[p]+'"></span>'+p+
+      ' <b style="color:var(--tx)">'+series[p][series[p].length-1]+'</b></span>';
+  });
+}
+function drawByTeam(){
+  var e=document.getElementById('byTeam'),lg=document.getElementById('byTeamLgnd');
+  e.innerHTML=''; lg.innerHTML='';
+  var mx=1,t;
+  for(t=0;t<CFG.teams;t++){var n=picksOf(t).length; if(n>mx)mx=n;}
+  for(t=0;t<CFG.teams;t++){
+    (function(ti){
+      var c2=counts(ti),tot=picksOf(ti).length,open=expand.team===ti,segs='';
+      POSN.forEach(function(p){
+        if(!c2[p]) return;
+        segs+='<span class="hbs" style="width:'+(c2[p]/mx*100)+'%;background:'+COL[p]+'">'+(c2[p]>1?c2[p]:'')+'</span>';
+      });
+      var d=document.createElement('div'); d.className='hbar clk';
+      d.innerHTML='<span class="hbx">'+(open?'\u25be':'\u25b8')+'</span>'+
+        '<span class="hbl"'+(ti===ME()?' style="color:var(--ac);font-weight:700"':'')+'>'+esc(teamNames[ti])+'</span>'+
+        '<span class="hbt">'+segs+'</span><span class="hbv">'+tot+'</span>';
+      d.addEventListener('click',function(){expand.team=open?null:ti;drawByTeam();});
+      e.appendChild(d);
+      if(open){
+        var w=document.createElement('div'); w.className='drill';
+        var rows=draftLog.filter(function(h){return h.teamIndex===ti;}).map(function(h){
+          var nm,pos,tm;
+          if(h.playerId!==null&&h.playerId!==undefined){var pl=byId(h.playerId);nm=pl.name;pos=pl.pos;tm=pl.team;}
+          else {nm=h.unlisted.name;pos=h.unlisted.pos;tm=h.unlisted.team;}
+          return '<tr style="border-left:3px solid '+(COL[pos]||'transparent')+'">'+
+            '<td class="mono" style="width:34px">R'+(Math.floor(h.pickIndex/CFG.teams)+1)+'</td>'+
+            '<td class="mono" style="width:34px">#'+(h.pickIndex+1)+'</td>'+
+            '<td class="pn">'+esc(nm)+'</td><td>'+posBadge(pos)+'</td><td class="mono">'+tm+'</td></tr>';
+        }).join('');
+        var g=gaps(ti),chips=[];
+        POSN.forEach(function(p){if(g[p]>0)chips.push(p+'\u00d7'+g[p]);});
+        if(g.FLEX>0) chips.push('FLEX\u00d7'+g.FLEX);
+        w.innerHTML='<div class="drillh"><span>'+esc(teamNames[ti])+' &mdash; '+tot+' picks</span><span>'+
+          (chips.length?'needs '+chips.join(', '):'starters set')+'</span></div>'+
+          (rows?'<div class="drills"><table><tbody>'+rows+'</tbody></table></div>':'<div class="empty">No picks yet.</div>');
+        e.appendChild(w);
+      }
+    })(t);
+  }
+  POSN.forEach(function(p){lg.innerHTML+='<span class="lgi"><span class="lgs" style="background:'+COL[p]+'"></span>'+p+'</span>';});
+  lg.innerHTML+='<span class="lgi" style="color:var(--dimr)">tap a row for picks</span>';
+}
+function drawValues(){
+  var e=document.getElementById('valueList'); e.innerHTML='';
+  var c1=cur()+1;
+  var av=players.filter(function(p){return !p.drafted&&p.adp!==null&&canRoster(p.pos)&&p.adp-c1>=6;});
+  av.sort(function(a,b){return (b.adp-c1)-(a.adp-c1);});
+  av=av.slice(0,8);
+  if(!av.length){e.innerHTML='<div class="empty">Nobody is falling meaningfully past ADP.</div>';return;}
+  var w=document.createElement('div'); w.className='drill';
+  w.innerHTML=drillTable(av);
+  e.appendChild(w); wire(w);
+}
+function drawRoster(){
+  var g=document.getElementById('rg'),w=document.getElementById('bwarn');
+  g.innerHTML=''; w.innerHTML='';
+  var picks=picksOf(viewTeam),slots=[];
+  POSN.forEach(function(p){for(var i=0;i<(CFG.start[p]||0);i++) slots.push(p);});
+  for(var f=0;f<CFG.flex;f++) slots.push('FLEX');
+  for(var b=0;b<benchN();b++) slots.push('BENCH');
+  var fill=slots.map(function(){return null;}),used={};
+  slots.forEach(function(s,i){
+    if(s==='FLEX'||s==='BENCH') return;
+    for(var j=0;j<picks.length;j++) if(picks[j].pos===s&&!used[j]){fill[i]=picks[j];used[j]=1;break;}
+  });
+  slots.forEach(function(s,i){
+    if(s!=='FLEX') return;
+    for(var j=0;j<picks.length;j++) if(FLEXOK.indexOf(picks[j].pos)>-1&&!used[j]){fill[i]=picks[j];used[j]=1;break;}
+  });
+  slots.forEach(function(s,i){
+    if(s!=='BENCH') return;
+    for(var j=0;j<picks.length;j++) if(!used[j]){fill[i]=picks[j];used[j]=1;break;}
+  });
+  var starters=slots.length-benchN(),bm={};
+  fill.slice(0,starters).forEach(function(p){if(p&&p.bye!=='-')bm[p.bye]=(bm[p.bye]||0)+1;});
+  Object.keys(bm).forEach(function(b2){
+    if(bm[b2]>=3){
+      var d=document.createElement('div'); d.className='al warn';
+      d.style.marginBottom='8px';
+      d.innerHTML='<span class="ic">BYE</span><span>'+bm[b2]+' starters share bye week '+b2+'.</span>';
+      w.appendChild(d);
+    }
+  });
+  slots.forEach(function(s,i){
+    var c=document.createElement('div'),p=fill[i];
+    if(p){
+      c.className='sc'; c.style.borderLeftColor=COL[p.pos]||'var(--ln)';
+      c.innerHTML='<div class="sl2">'+s+'</div><div class="spn">'+esc(p.name)+'</div>'+
+        '<div class="sm">'+p.pos+' &middot; '+p.team+' &middot; bye '+p.bye+'</div>';
+    } else {c.className='sc emp';c.innerHTML='<div class="sl2">'+s+'</div><div class="se">Open</div>';}
+    g.appendChild(c);
+  });
+}
+
+function drawSetup(){
+  function opts(sel,arr,val){
+    sel.innerHTML='';
+    arr.forEach(function(v){
+      var o=document.createElement('option'); o.value=v; o.textContent=v;
+      if(v===val) o.selected=true; sel.appendChild(o);
+    });
+  }
+  var sl=[]; for(var i=1;i<=CFG.teams;i++) sl.push(i);
+  opts(document.getElementById('cfgSlot'),sl,CFG.slot);
+  opts(document.getElementById('cfgTeams'),[8,10,12,14,16],CFG.teams);
+  opts(document.getElementById('cfgRounds'),[13,14,15,16,17,18,19,20],CFG.rounds);
+  ['QB','RB','WR','TE','DST'].forEach(function(p){
+    document.getElementById('st'+p).value=CFG.start[p];
+    document.getElementById('mx'+p).value=CFG.max[p];
+  });
+  document.getElementById('stFLEX').value=CFG.flex;
+  var s2=0; POSN.forEach(function(p){s2+=CFG.start[p]||0;});
+  document.getElementById('cfgSummary').innerHTML=
+    s2+' starters + '+CFG.flex+' flex + '+benchN()+' bench = '+CFG.rounds+' rounds<br>'+
+    'Pick '+CFG.slot+' of '+CFG.teams+'<br>Your picks: '+myNums().slice(0,5).join(', ')+'&hellip;';
+  var tn=document.getElementById('tnames'); tn.innerHTML='';
+  teamNames.forEach(function(n,i){
+    var d=document.createElement('div'); d.className='tn';
+    d.innerHTML='<span class="tnx">'+(i+1)+'</span><input class="tni'+(i===ME()?' me':'')+'" type="text" value="'+esc(n)+'" data-tn="'+i+'">';
+    tn.appendChild(d);
+  });
+  Array.prototype.forEach.call(tn.querySelectorAll('input[data-tn]'),function(inp){
+    inp.addEventListener('change',function(){
+      teamNames[parseInt(inp.getAttribute('data-tn'),10)]=inp.value.trim()||('Team '+(parseInt(inp.getAttribute('data-tn'),10)+1));
+      save(); redraw();
+    });
+  });
+  var ts=document.getElementById('tsel'); ts.innerHTML='';
+  teamNames.forEach(function(n,i){
+    var o=document.createElement('option'); o.value=i; o.textContent=n;
+    if(i===viewTeam) o.selected=true; ts.appendChild(o);
+  });
+}
+
+function drawQuick(){
+  var box=document.getElementById('qres'),v=document.getElementById('q').value.trim();
+  box.innerHTML=''; qm=[];
+  if(!v||done()) return;
+  var lv=v.toLowerCase();
+  qm=players.filter(function(p){return !p.drafted&&p.name.toLowerCase().indexOf(lv)>-1;})
+    .sort(function(a,b){
+      var ai=a.name.toLowerCase().indexOf(lv),bi=b.name.toLowerCase().indexOf(lv);
+      if(ai!==bi) return ai-bi;
+      return (a.adp===null?999:a.adp)-(b.adp===null?999:b.adp);
+    }).slice(0,6);
+  if(qsel>=qm.length) qsel=0;
+  qm.forEach(function(p,i){
+    var d=document.createElement('div'); d.className='qr'+(i===qsel?' sel':'');
+    d.style.borderLeftColor=COL[p.pos];
+    d.innerHTML='<span class="qrn">'+esc(p.name)+'</span>'+posBadge(p.pos)+
+      '<span class="qrm">'+p.team+(p.adp===null?'':' &middot; '+rndOf(p.adp))+'</span>';
+    d.addEventListener('click',function(){draft(p.id);});
+    box.appendChild(d);
+  });
+  if(!qm.length){
+    var d=document.createElement('div'); d.className='qr';
+    d.innerHTML='<span class="qrn" style="color:var(--dim);font-weight:400;font-style:italic;">Log "'+esc(v)+'" manually</span><span class="btn p s">Add</span>';
+    d.addEventListener('click',function(){manual(v);});
+    box.appendChild(d);
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+// EDIT ANY PICK
+// ════════════════════════════════════════════════════════════
+function openEdit(idx){
+  var lg=draftLog.filter(function(h){return h.pickIndex===idx;})[0];
+  if(!lg) return;
+  var nm=lg.playerId!==null&&lg.playerId!==undefined?byId(lg.playerId).name:lg.unlisted.name;
+  document.getElementById('mdTitle').textContent='Pick '+(idx+1)+' \u2014 '+teamNames[lg.teamIndex];
+  var b=document.getElementById('mdBody');
+  b.innerHTML='<div style="font-size:13px;margin-bottom:12px;">Currently logged: <b>'+esc(nm)+'</b></div>'+
+    '<div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--dimr);margin-bottom:6px;">Replace with</div>'+
+    '<input class="qin" id="edq" type="text" placeholder="Type a name..." autocomplete="off">'+
+    '<div class="qres" id="edres" style="max-height:210px;"></div>'+
+    '<div style="display:flex;gap:6px;margin-top:14px;padding-top:12px;border-top:1px solid var(--ln);">'+
+    '<button class="btn danger" id="edDel">Delete this pick</button></div>'+
+    '<div style="font-size:10.5px;color:var(--dimr);margin-top:8px;line-height:1.5;">'+
+    'Deleting shifts every later pick up one slot and reassigns them to the right teams.</div>';
+  document.getElementById('ov').classList.add('on');
+  var q2=document.getElementById('edq'),res=document.getElementById('edres');
+  function draw(){
+    res.innerHTML='';
+    var v=q2.value.trim(); if(!v) return;
+    var lv=v.toLowerCase();
+    players.filter(function(p){return (!p.drafted||p.id===lg.playerId)&&p.name.toLowerCase().indexOf(lv)>-1;})
+      .sort(function(a,b){return (a.adp===null?999:a.adp)-(b.adp===null?999:b.adp);})
+      .slice(0,6).forEach(function(p){
+        var d=document.createElement('div'); d.className='qr';
+        d.style.borderLeftColor=COL[p.pos];
+        d.innerHTML='<span class="qrn">'+esc(p.name)+'</span>'+posBadge(p.pos)+'<span class="qrm">'+p.team+'</span>';
+        d.addEventListener('click',function(){replacePick(idx,p.id);});
+        res.appendChild(d);
+      });
+  }
+  q2.addEventListener('input',draw);
+  document.getElementById('edDel').addEventListener('click',function(){deletePick(idx);});
+}
+function closeEdit(){document.getElementById('ov').classList.remove('on');}
+function replacePick(idx,newId){
+  var lg=draftLog.filter(function(h){return h.pickIndex===idx;})[0];
+  if(!lg) return;
+  if(lg.playerId!==null&&lg.playerId!==undefined){var old=byId(lg.playerId); if(old)old.drafted=false;}
+  var np=byId(newId); if(!np) return;
+  np.drafted=true; lg.playerId=newId; lg.unlisted=null;
+  closeEdit(); save(); redraw(); drawQuick();
+}
+function deletePick(idx){
+  var lg=draftLog.filter(function(h){return h.pickIndex===idx;})[0];
+  if(!lg) return;
+  if(lg.playerId!==null&&lg.playerId!==undefined){var p=byId(lg.playerId); if(p)p.drafted=false;}
+  draftLog=draftLog.filter(function(h){return h.pickIndex!==idx;});
+  // close the gap: renumber sequentially and reassign teams by snake order
+  draftLog.sort(function(a,b){return a.pickIndex-b.pickIndex;});
+  draftLog.forEach(function(h,i){h.pickIndex=i;h.teamIndex=teamAt(i);});
+  closeEdit(); save(); redraw(); drawQuick();
+}
+
+// ════════════════════════════════════════════════════════════
+// EXPORT
+// ════════════════════════════════════════════════════════════
+function exportText(kind){
+  var out='',i;
+  if(kind==='mine'){
+    var picks=draftLog.filter(function(h){return h.teamIndex===ME();});
+    out=teamNames[ME()]+' \u2014 pick '+CFG.slot+' of '+CFG.teams+'\n';
+    out+='='.repeat(38)+'\n';
+    picks.forEach(function(h){
+      var nm,pos,tm,by;
+      if(h.playerId!==null&&h.playerId!==undefined){var p=byId(h.playerId);nm=p.name;pos=p.pos;tm=p.team;by=p.bye;}
+      else {nm=h.unlisted.name;pos=h.unlisted.pos;tm=h.unlisted.team;by='?';}
+      out+='R'+(Math.floor(h.pickIndex/CFG.teams)+1)+' (#'+(h.pickIndex+1)+')  '+
+        pos+'  '+nm+'  '+tm+'  bye '+by+'\n';
+    });
+    var c=counts(ME());
+    out+='\n'+POSN.map(function(p){return p+' '+c[p];}).join('  ')+'\n';
+  } else if(kind==='all'){
+    out='Draft board \u2014 '+CFG.teams+' teams, '+CFG.rounds+' rounds\n'+'='.repeat(38)+'\n';
+    for(i=0;i<draftLog.length;i++){
+      var h=draftLog[i],nm,pos;
+      if(h.playerId!==null&&h.playerId!==undefined){var p2=byId(h.playerId);nm=p2.name;pos=p2.pos;}
+      else {nm=h.unlisted.name;pos=h.unlisted.pos;}
+      if(i%CFG.teams===0) out+='\n-- Round '+(Math.floor(i/CFG.teams)+1)+' --\n';
+      out+=(h.pickIndex+1)+'. '+teamNames[h.teamIndex]+': '+nm+' ('+pos+')\n';
+    }
+  } else if(kind==='backup'){
+    out=JSON.stringify({v:6,cfg:CFG,names:teamNames,
+      log:draftLog.map(function(h){return [h.pickIndex,h.playerId,h.unlisted,h.teamIndex];}),
+      tg:players.filter(function(p){return p.target;}).map(function(p){return p.id;}),
+      bm:players.filter(function(p){return p.bump;}).map(function(p){return [p.id,p.bump];})});
+  } else {
+    out='pick,round,team,player,pos,nfl_team,bye,adp,proj\n';
+    draftLog.forEach(function(h){
+      var nm,pos,tm,by,adp,pr;
+      if(h.playerId!==null&&h.playerId!==undefined){
+        var p3=byId(h.playerId); nm=p3.name;pos=p3.pos;tm=p3.team;by=p3.bye;
+        adp=p3.adp===null?'':p3.adp; pr=p3.proj===null?'':p3.proj;
+      } else {nm=h.unlisted.name;pos=h.unlisted.pos;tm=h.unlisted.team;by='';adp='';pr='';}
+      out+=[(h.pickIndex+1),(Math.floor(h.pickIndex/CFG.teams)+1),'"'+teamNames[h.teamIndex]+'"',
+            '"'+nm+'"',pos,tm,by,adp,pr].join(',')+'\n';
+    });
+  }
+  document.getElementById('expOut').value=out||'Nothing logged yet.';
+}
+
+// Restore a backup produced on another device. Storage is per browser, so this
+// is the only way a board travels between your phone and your tablet.
+function importState(txt){
+  var d;
+  try{ d=JSON.parse(txt); }catch(e){ return 'That is not a valid backup. Paste the text from the Backup button, whole and unedited.'; }
+  if(!d||d.v!==6||!d.log) return 'That backup is from a different version and cannot be read.';
+  players.forEach(function(p){p.drafted=false;p.target=false;p.bump=0;});
+  if(d.cfg){CFG=d.cfg; if(!CFG.max) CFG.max={QB:3,RB:6,WR:6,TE:3,DST:3};}
+  teamNames=d.names||[];
+  draftLog=(d.log||[]).map(function(a){return {pickIndex:a[0],playerId:a[1],unlisted:a[2],teamIndex:a[3]};});
+  draftLog.forEach(function(h){
+    if(h.playerId!==null&&h.playerId!==undefined){var p=byId(h.playerId); if(p)p.drafted=true;}
+  });
+  (d.tg||[]).forEach(function(id){var p=byId(id); if(p)p.target=true;});
+  (d.bm||[]).forEach(function(a){var p=byId(a[0]); if(p)p.bump=a[1];});
+  save(); redraw(); drawQuick();
+  return 'Restored '+draftLog.length+' picks, '+(d.tg||[]).length+' targets and '+(d.bm||[]).length+' ratings.';
+}
+
+// ════════════════════════════════════════════════════════════
+// ACTIONS
+// ════════════════════════════════════════════════════════════
+function wire(scope){
+  Array.prototype.forEach.call(scope.querySelectorAll('[data-d]'),function(b){
+    b.addEventListener('click',function(){draft(parseInt(b.getAttribute('data-d'),10));});
+  });
+  Array.prototype.forEach.call(scope.querySelectorAll('[data-s]'),function(b){
+    b.addEventListener('click',function(){toggle(parseInt(b.getAttribute('data-s'),10));});
+  });
+  Array.prototype.forEach.call(scope.querySelectorAll('[data-b]'),function(b){
+    b.addEventListener('click',function(){
+      setBump(parseInt(b.getAttribute('data-b'),10),parseInt(b.getAttribute('data-bv'),10));
+    });
+  });
+  Array.prototype.forEach.call(scope.querySelectorAll('[data-e]'),function(b){
+    b.addEventListener('click',function(ev){ev.stopPropagation();openEdit(parseInt(b.getAttribute('data-e'),10));});
+  });
+}
+function draft(id){
+  if(done()) return;
+  var p=byId(id); if(!p||p.drafted) return;
+  p.drafted=true;
+  draftLog.push({pickIndex:cur(),playerId:id,unlisted:null,teamIndex:teamAt(cur())});
+  document.getElementById('q').value=''; qsel=0;
+  save(); redraw(); drawQuick();
+}
+function manual(name){
+  var pos=prompt('Position for '+name+'?  QB / RB / WR / TE / DST / K','RB');
+  if(!pos) return;
+  pos=pos.trim().toUpperCase();
+  if(['QB','RB','WR','TE','DST','K'].indexOf(pos)<0){alert('Use QB, RB, WR, TE, DST or K.');return;}
+  draftLog.push({pickIndex:cur(),playerId:null,unlisted:{name:name,pos:pos,team:'-'},teamIndex:teamAt(cur())});
+  document.getElementById('q').value=''; qsel=0;
+  save(); redraw(); drawQuick();
+}
+function toggle(id){var p=byId(id); if(!p)return; p.target=!p.target; save(); redraw();}
+function setBump(id,dir){
+  var p=byId(id); if(!p) return;
+  // Each arrow cycles its own direction: 0 -> 1 -> 2 -> 0. Pressing the
+  // opposite arrow jumps straight across rather than stepping through zero.
+  if(dir>0) p.bump = p.bump>=2 ? 0 : (p.bump<0 ? 1 : p.bump+1);
+  else       p.bump = p.bump<=-2 ? 0 : (p.bump>0 ? -1 : p.bump-1);
+  save(); redraw();
+}
+function undo(){
+  if(!draftLog.length) return;
+  var l=draftLog.pop();
+  if(l.playerId!==null&&l.playerId!==undefined){var p=byId(l.playerId); if(p)p.drafted=false;}
+  save(); redraw(); drawQuick();
+}
+function redraw(){
+  initNames(); computeRepl(); computeRoom();
+  if(viewTeam>=CFG.teams) viewTeam=ME();
+  if(expand.team!==null&&expand.team>=CFG.teams) expand.team=null;
+  if(expand.need!==null&&expand.need>=CFG.teams) expand.need=null;
+  drawHeader(); drawNudge(); drawStrip(); drawAlerts(); drawGaps(); drawRecs();
+  drawWait(); drawRoom(); drawAtRisk();
+  drawPlayers(); drawTargets(); drawFlow();
+  drawNeeds(); drawDepth(); drawDrain(); drawByTeam(); drawValues(); drawRoster();
+  drawBoard(); drawSetup();
+}
+
+// ── events ──
+Array.prototype.forEach.call(document.querySelectorAll('.tab'),function(t){
+  t.addEventListener('click',function(){
+    Array.prototype.forEach.call(document.querySelectorAll('.tab'),function(x){x.classList.remove('on');});
+    t.classList.add('on');
+    Array.prototype.forEach.call(document.querySelectorAll('.panel'),function(p){p.hidden=true;});
+    document.getElementById('p-'+t.getAttribute('data-t')).hidden=false;
+  });
+});
+Array.prototype.forEach.call(document.querySelectorAll('[data-p]'),function(b){
+  b.addEventListener('click',function(){
+    Array.prototype.forEach.call(document.querySelectorAll('[data-p]'),function(x){x.className='btn s g';});
+    b.className='btn s';
+    filter=b.getAttribute('data-p'); drawPlayers();
+  });
+});
+document.getElementById('search').addEventListener('input',function(e){search=e.target.value;drawPlayers();});
+document.getElementById('sort').addEventListener('change',function(e){sortBy=e.target.value;drawPlayers();});
+document.getElementById('btnUndo').addEventListener('click',undo);
+document.getElementById('mdClose').addEventListener('click',closeEdit);
+document.getElementById('ov').addEventListener('click',function(e){if(e.target.id==='ov')closeEdit();});
+document.getElementById('btnReset').addEventListener('click',function(){
+  if(!draftLog.length){alert('Nothing to clear.');return;}
+  if(!confirm('Clear all '+draftLog.length+' logged picks?')) return;
+  if(!confirm('Confirm: clear the board?')) return;
+  players.forEach(function(p){p.drafted=false;});
+  draftLog=[]; save(); redraw(); drawQuick();
+});
+document.getElementById('tsel').addEventListener('change',function(e){viewTeam=parseInt(e.target.value,10);drawRoster();});
+document.getElementById('cfgSlot').addEventListener('change',function(e){CFG.slot=parseInt(e.target.value,10);save();redraw();});
+function reshape(f,v){
+  if(draftLog.length&&!confirm('You have '+draftLog.length+' picks logged. Changing this reshapes the board. Continue?')){drawSetup();return;}
+  CFG[f]=v;
+  if(CFG.slot>CFG.teams) CFG.slot=CFG.teams;
+  teamNames=teamNames.slice(0,CFG.teams);
+  draftLog.forEach(function(h,i){h.pickIndex=i;h.teamIndex=teamAt(i);});
+  save(); redraw();
+}
+document.getElementById('cfgTeams').addEventListener('change',function(e){reshape('teams',parseInt(e.target.value,10));});
+document.getElementById('cfgRounds').addEventListener('change',function(e){reshape('rounds',parseInt(e.target.value,10));});
+['QB','RB','WR','TE','DST'].forEach(function(p){
+  document.getElementById('st'+p).addEventListener('change',function(e){
+    var v=parseInt(e.target.value,10); if(isNaN(v)||v<0)return; CFG.start[p]=v; save(); redraw();});
+  document.getElementById('mx'+p).addEventListener('change',function(e){
+    var v=parseInt(e.target.value,10); if(isNaN(v)||v<1)return; CFG.max[p]=v; save(); redraw();});
+});
+document.getElementById('stFLEX').addEventListener('change',function(e){
+  var v=parseInt(e.target.value,10); if(isNaN(v)||v<0)return; CFG.flex=v; save(); redraw();});
+document.getElementById('expMine').addEventListener('click',function(){exportText('mine');});
+document.getElementById('expAll').addEventListener('click',function(){exportText('all');});
+document.getElementById('expCsv').addEventListener('click',function(){exportText('csv');});
+document.getElementById('expBackup').addEventListener('click',function(){exportText('backup');});
+document.getElementById('btnImport').addEventListener('click',function(){
+  var t=document.getElementById('expOut').value.trim(),m=document.getElementById('impMsg');
+  if(!t){m.textContent='Paste a backup into the box first.';return;}
+  if(draftLog.length&&!confirm('Restoring replaces the '+draftLog.length+' picks currently logged. Continue?')) return;
+  m.textContent=importState(t);
+});
+document.getElementById('expCopy').addEventListener('click',function(){
+  var t=document.getElementById('expOut');
+  if(!t.value){exportText('mine');}
+  t.select();
+  var ok=false;
+  try{ok=document.execCommand('copy');}catch(e){}
+  if(!ok&&navigator&&navigator.clipboard){
+    try{navigator.clipboard.writeText(t.value);ok=true;}catch(e){}
+  }
+  this.textContent=ok?'Copied':'Select & copy';
+  var self=this; setTimeout(function(){self.textContent='Copy';},1600);
+});
+var pop=document.getElementById('pop');
+Array.prototype.forEach.call(document.querySelectorAll('.info'),function(b){
+  b.addEventListener('click',function(ev){
+    ev.stopPropagation();
+    var k=b.getAttribute('data-info');
+    if(pop.classList.contains('on')&&pop.getAttribute('data-k')===k){pop.classList.remove('on');return;}
+    pop.innerHTML=INFO[k]||''; pop.setAttribute('data-k',k); pop.classList.add('on');
+    var r=b.getBoundingClientRect(),pw=Math.min(330,window.innerWidth-24);
+    pop.style.width=pw+'px';
+    pop.style.left=Math.min(Math.max(8,r.left-pw/2+r.width/2),window.innerWidth-pw-8)+'px';
+    var top=r.bottom+8;
+    if(top+pop.offsetHeight>window.innerHeight-8) top=Math.max(8,r.top-pop.offsetHeight-8);
+    pop.style.top=top+'px';
+  });
+});
+document.addEventListener('click',function(){pop.classList.remove('on');});
+pop.addEventListener('click',function(e){e.stopPropagation();});
+var q=document.getElementById('q');
+q.addEventListener('input',function(){qsel=0;drawQuick();});
+q.addEventListener('keydown',function(e){
+  if(e.key==='ArrowDown'){e.preventDefault();qsel=Math.min(qsel+1,Math.max(0,qm.length-1));drawQuick();}
+  else if(e.key==='ArrowUp'){e.preventDefault();qsel=Math.max(qsel-1,0);drawQuick();}
+  else if(e.key==='Enter'){e.preventDefault();
+    if(qm.length) draft(qm[qsel].id); else if(q.value.trim()) manual(q.value.trim());}
+});
+
+load(); initNames(); viewTeam=ME(); computeRepl(); computeRoom(); redraw();
+
+// Offline support. Registration is wrapped because service workers need a
+// secure origin - opening index.html straight off disk will skip this quietly
+// rather than throwing, and the app still works, just without offline caching.
+if('serviceWorker' in navigator && location.protocol.indexOf('http')===0){
+  window.addEventListener('load',function(){
+    navigator.serviceWorker.register('./sw.js').catch(function(){});
+  });
+}
+// Warn if the board is running from a file:// path, where browsers key storage
+// to the exact file location - the reason a downloaded copy loses its data.
+if(location.protocol==='file:'){
+  var warn=document.createElement('div');
+  warn.style.cssText='background:#3a2a12;border:1px solid #e0a832;color:#e0a832;padding:9px 13px;'+
+    'border-radius:6px;margin:10px 13px;font-size:12px;line-height:1.5;max-width:1500px;';
+  warn.innerHTML='Running from a local file. Your board may not survive closing the browser, '+
+    'because storage is tied to this exact file path. Host it at a web address to fix that permanently.';
+  document.body.insertBefore(warn,document.body.firstChild);
+}
+
+</script>
+</body>
+</html>
