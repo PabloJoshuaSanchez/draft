@@ -451,9 +451,22 @@
   .al.urgent{border-left-color:var(--urg);color:#ef8b87;}
   .al.warn{border-left-color:var(--ac);color:var(--ac);}
   .al .ic{flex-shrink:0;font-size:10px;font-weight:800;letter-spacing:.5px;}
-  [data-viewer] .btn.p,[data-viewer] .star,[data-viewer] .bump,[data-viewer] .fedit,
-  [data-viewer] #btnUndo,[data-viewer] .qin,[data-viewer] .csmore{display:none!important;}
-  [data-viewer] .bcell{cursor:default;}
+  /* Read-only hides anything that CHANGES the draft. View controls - column
+     picker, cheat-sheet depth, show-more, theme, sort - all stay usable, since
+     the point is to let someone follow along, not to lock them out of looking. */
+  [data-ro="1"] .btn.p,[data-ro="1"] .star,[data-ro="1"] .bump,[data-ro="1"] .fedit,
+  [data-ro="1"] #btnUndo,[data-ro="1"] #btnReset,[data-ro="1"] #bManual,
+  [data-ro="1"] .qbox,[data-ro="1"] #bq,[data-ro="1"] .roEdit{display:none!important;}
+  [data-ro="1"] .bcell{cursor:default;}
+  [data-ro="1"] .rside{gap:0;}
+  /* Simple layout trims the tab bar to what a watcher actually needs. */
+  [data-simple="1"] .tab[data-t="players"],
+  [data-simple="1"] .tab[data-t="targets"],
+  [data-simple="1"] .tab[data-t="insights"]{display:none;}
+  .robar{background:var(--ac);color:var(--acfg);padding:7px 13px;font-size:12px;
+    font-weight:700;text-align:center;display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;}
+  .robar .rosub{font-weight:400;opacity:.85;font-size:11px;}
+  .robar a{color:var(--acfg);text-decoration:underline;font-weight:400;}
   .empty{text-align:center;padding:26px 15px;color:var(--dimr);font-size:12px;line-height:1.6;}
   .saveind{position:fixed;bottom:9px;right:9px;background:var(--s3);border:1px solid var(--ln2);
     color:var(--dim);font-size:9.5px;padding:5px 10px;border-radius:12px;opacity:0;transition:opacity .3s;
@@ -476,9 +489,10 @@
 </style>
 </head>
 <body>
-<div id="viewerBar" hidden style="background:var(--ac);color:var(--acfg);padding:7px 13px;font-size:12px;font-weight:700;text-align:center;">
-  Watching someone else's draft &mdash; read only. Your own board is untouched.
-  <a href="#" id="leaveViewer" style="color:var(--acfg);text-decoration:underline;margin-left:8px;font-weight:400;">Leave</a>
+<div id="viewerBar" class="robar" hidden>
+  <span id="roTitle">Watching &mdash; read only</span>
+  <span class="rosub" id="roSub"></span>
+  <a href="#" id="leaveViewer">Leave</a>
 </div>
 <div class="top"><div class="prog"><div class="progf" id="progf"></div></div><div class="wrap">
   <div class="hdr">
@@ -682,7 +696,7 @@
 
 <!-- ══ SETUP ══ -->
 <div class="panel" id="p-setup" hidden>
-  <div class="card"><div class="ch"><h3>League</h3><button class="info" data-info="league">i</button></div>
+  <div class="card roEdit"><div class="ch"><h3>League</h3><button class="info" data-info="league">i</button></div>
     <div class="cb"><div class="setg" style="margin-bottom:0;">
       <div class="sf"><div class="sfl">Your draft slot</div><select class="sfi" id="cfgSlot"></select></div>
       <div class="sf"><div class="sfl">Teams</div><select class="sfi" id="cfgTeams"></select></div>
@@ -724,7 +738,7 @@
       </div>
     </div>
   </div>
-  <div class="card"><div class="ch"><h3>Roster rules</h3><button class="info" data-info="roster">i</button></div>
+  <div class="card roEdit"><div class="ch"><h3>Roster rules</h3><button class="info" data-info="roster">i</button></div>
     <div class="cb"><div class="setg" style="margin-bottom:0;">
       <div class="sf"><div class="sfl">Starters</div>
         <div class="rowin"><label>QB</label><input type="number" min="0" max="4" id="stQB"><label>RB</label><input type="number" min="0" max="5" id="stRB"></div>
@@ -739,7 +753,7 @@
       <div class="sf"><div class="sfl">Summary</div><div id="cfgSummary" style="font-size:11.5px;color:var(--dim);line-height:1.7;"></div></div>
     </div></div>
   </div>
-  <div class="card"><div class="ch"><h3>Team names</h3></div>
+  <div class="card roEdit"><div class="ch"><h3>Team names</h3></div>
     <div class="cb"><div class="tnames" id="tnames"></div></div>
   </div>
   <div class="card"><div class="ch"><h3>Share the draft</h3><button class="info" data-info="share">i</button></div>
@@ -766,6 +780,17 @@
       </div>
       <input class="sfi" id="syncUrl" type="text" placeholder="https://your-db.firebaseio.com/draft/room1.json" style="font-family:var(--fm);font-size:12px;">
       <div id="syncStatus" style="font-size:11px;margin-top:7px;"></div>
+      <div style="margin-top:13px;">
+        <div class="sfl">While watching, show</div>
+        <span class="seg">
+          <button id="vwSimple" class="on">Just the essentials</button>
+          <button id="vwFull">Every tab</button>
+        </span>
+        <div style="font-size:10.5px;color:var(--dimr);margin-top:6px;line-height:1.55;">
+          Essentials keeps Board, On the clock, Cheat sheet and Setup. Every tab adds
+          Players, Targets and Insights.
+        </div>
+      </div>
       <div style="font-size:10.5px;color:var(--dimr);margin-top:7px;line-height:1.55;">
         Publish sends the board after every pick. Watch polls the same URL every six seconds.
         See SHARING.md for a five-minute Firebase setup. <b style="color:var(--ac)">Test this before the draft</b> &mdash;
@@ -798,7 +823,7 @@
     <div class="cb"><p style="font-size:11.5px;color:var(--dim);line-height:1.65;margin:0;">
       Tap the info icon for where every number comes from, and which fields are sourced versus judgment.</p></div>
   </div>
-  <div class="card"><div class="ch"><h3>Danger zone</h3></div>
+  <div class="card roEdit"><div class="ch"><h3>Danger zone</h3></div>
     <div class="cb"><div class="dz">
       <div style="font-size:11.5px;color:var(--dim);line-height:1.55;margin-bottom:10px;">
         Clearing wipes every logged pick. Targets, your own player ratings, and league settings are kept.
@@ -1446,7 +1471,7 @@ function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').repl
 // ════════════════════════════════════════════════════════════
 var st=null;
 function save(){
-  if(VIEWER) return;
+  if(readOnly()) return;   // never overwrite the watcher's own board
   try{
     localStorage.setItem(KEY,JSON.stringify({v:6,cfg:CFG,names:teamNames,
       log:draftLog.map(function(h){return [h.pickIndex,h.playerId,h.unlisted,h.teamIndex];}),
@@ -2418,6 +2443,7 @@ function drawQuick(){
 // EDIT ANY PICK
 // ════════════════════════════════════════════════════════════
 function openEdit(idx){
+  if(readOnly()) return;
   var lg=draftLog.filter(function(h){return h.pickIndex===idx;})[0];
   if(!lg) return;
   var nm=lg.playerId!==null&&lg.playerId!==undefined?byId(lg.playerId).name:lg.unlisted.name;
@@ -2570,11 +2596,41 @@ function shareUrl(){
   var base=location.href.split('#')[0];
   return base+'#watch='+encodeURIComponent(encodeState());
 }
-function enterViewer(){
-  VIEWER=true;
-  var b=document.getElementById('viewerBar');
-  if(b) b.hidden=false;
-  document.body.setAttribute('data-viewer','1');
+function readOnly(){ return VIEWER||SYNC.mode==='watch'; }
+var SIMPLE=true;
+function enterViewer(){ VIEWER=true; applyMode(); }
+function applyMode(){
+  var ro=readOnly(),b=document.getElementById('viewerBar');
+  if(document.body){
+    document.body.setAttribute('data-ro',ro?'1':'0');
+    document.body.setAttribute('data-simple',(ro&&SIMPLE)?'1':'0');
+  }
+  if(b){
+    b.hidden=!ro;
+    var t=document.getElementById('roTitle'),su=document.getElementById('roSub');
+    if(t) t.textContent = VIEWER ? 'Watching a shared snapshot' : 'Watching live';
+    if(su){
+      su.textContent = VIEWER
+        ? 'Read only. Your own board is untouched.'
+        : (SYNC.last?'Read only \u00b7 last update '+new Date(SYNC.last).toLocaleTimeString()
+                    :'Read only \u00b7 waiting for the first pick');
+    }
+    var lv=document.getElementById('leaveViewer');
+    if(lv) lv.textContent = VIEWER?'Leave':'Stop watching';
+  }
+  // If a hidden tab was the active one, fall back to the board.
+  if(ro&&SIMPLE){
+    var act=document.querySelector('.tab.on');
+    var hid=['players','targets','insights'];
+    if(act&&hid.indexOf(act.getAttribute('data-t'))>-1) showTab('board');
+  }
+}
+function showTab(name){
+  Array.prototype.forEach.call(document.querySelectorAll('.tab'),function(x){
+    x.className='tab'+(x.getAttribute('data-t')===name?' on':'');
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('.panel'),function(p){p.hidden=true;});
+  var el=document.getElementById('p-'+name); if(el) el.hidden=false;
 }
 
 // ── live sync ──
@@ -2596,12 +2652,12 @@ function syncPull(){
       .then(function(r){ return r.json(); })
       .then(function(d){
         if(!d||!d.s){ SYNC.err='nothing published there yet'; drawSync(); return; }
-        if(d.t&&d.t===SYNC.last){ SYNC.err=''; drawSync(); return; }
+        if(d.t&&d.t===SYNC.last){ SYNC.err=''; drawSync(); applyMode(); return; }
         SYNC.last=d.t||Date.now(); SYNC.err='';
         var e=decodeState(d.s);
         if(e) SYNC.err=e;
         computeRepl(); computeStartQual(); computeRoom();
-        redrawNoSave();
+        redrawNoSave(); applyMode();
       })
       .catch(function(){ SYNC.err='could not reach the sync URL'; drawSync(); });
   }catch(e){ SYNC.err='could not reach the sync URL'; drawSync(); }
@@ -2709,7 +2765,7 @@ function wire(scope){
   });
 }
 function draft(id){
-  if(done()) return;
+  if(done()||readOnly()) return;
   var p=byId(id); if(!p||p.drafted) return;
   p.drafted=true;
   draftLog.push({pickIndex:cur(),playerId:id,unlisted:null,teamIndex:teamAt(cur())});
@@ -2717,6 +2773,7 @@ function draft(id){
   save(); redraw(); drawQuick(); syncPush();
 }
 function manual(name){
+  if(readOnly()) return;
   var pos=prompt('Position for '+name+'?  QB / RB / WR / TE / DST / K','RB');
   if(!pos) return;
   pos=pos.trim().toUpperCase();
@@ -2725,8 +2782,10 @@ function manual(name){
   document.getElementById('q').value=''; qsel=0;
   save(); redraw(); drawQuick();
 }
-function toggle(id){var p=byId(id); if(!p)return; p.target=!p.target; save(); redraw();}
+function toggle(id){ if(readOnly()) return;
+  var p=byId(id); if(!p)return; p.target=!p.target; save(); redraw();}
 function setBump(id,dir){
+  if(readOnly()) return;
   var p=byId(id); if(!p) return;
   // Each arrow cycles its own direction: 0 -> 1 -> 2 -> 0. Pressing the
   // opposite arrow jumps straight across rather than stepping through zero.
@@ -2735,7 +2794,7 @@ function setBump(id,dir){
   save(); redraw();
 }
 function undo(){
-  if(!draftLog.length) return;
+  if(!draftLog.length||readOnly()) return;
   var l=draftLog.pop();
   if(l.playerId!==null&&l.playerId!==undefined){var p=byId(l.playerId); if(p)p.drafted=false;}
   save(); redraw(); drawQuick();
@@ -2756,12 +2815,7 @@ function redraw(){
 
 // ── events ──
 Array.prototype.forEach.call(document.querySelectorAll('.tab'),function(t){
-  t.addEventListener('click',function(){
-    Array.prototype.forEach.call(document.querySelectorAll('.tab'),function(x){x.classList.remove('on');});
-    t.classList.add('on');
-    Array.prototype.forEach.call(document.querySelectorAll('.panel'),function(p){p.hidden=true;});
-    document.getElementById('p-'+t.getAttribute('data-t')).hidden=false;
-  });
+  t.addEventListener('click',function(){ showTab(t.getAttribute('data-t')); });
 });
 Array.prototype.forEach.call(document.querySelectorAll('[data-p]'),function(b){
   b.addEventListener('click',function(){
@@ -2943,17 +2997,33 @@ Array.prototype.forEach.call(document.querySelectorAll('[data-sm]'),function(b){
   b.addEventListener('click',function(){
     Array.prototype.forEach.call(document.querySelectorAll('[data-sm]'),function(x){x.className='';});
     b.className='on';
+    var was=SYNC.mode;
     SYNC.mode=b.getAttribute('data-sm');
     SYNC.url=document.getElementById('syncUrl').value.trim();
     SYNC.err='';
     try{localStorage.setItem('ffsync',JSON.stringify({mode:SYNC.mode,url:SYNC.url}));}catch(e){}
-    syncStart();
+    // Leaving watch mode restores whatever board this device had of its own,
+    // since watching only ever held the publisher's picks in memory.
+    if(was==='watch'&&SYNC.mode!=='watch'&&!VIEWER){
+      players.forEach(function(p){p.drafted=false;p.target=false;p.bump=0;});
+      draftLog=[]; teamNames=[];
+      load(); initNames(); computeRepl(); computeStartQual(); computeRoom();
+    }
+    applyMode(); syncStart(); redraw();
   });
 });
 document.getElementById('syncUrl').addEventListener('change',function(e){
   SYNC.url=e.target.value.trim(); SYNC.err='';
   try{localStorage.setItem('ffsync',JSON.stringify({mode:SYNC.mode,url:SYNC.url}));}catch(e){}
   syncStart();
+});
+document.getElementById('vwSimple').addEventListener('click',function(){
+  SIMPLE=true; this.className='on'; document.getElementById('vwFull').className='';
+  try{localStorage.setItem('ffsimple','1');}catch(e){} applyMode();
+});
+document.getElementById('vwFull').addEventListener('click',function(){
+  SIMPLE=false; this.className='on'; document.getElementById('vwSimple').className='';
+  try{localStorage.setItem('ffsimple','0');}catch(e){} applyMode();
 });
 document.getElementById('syncTest').addEventListener('click',function(){
   SYNC.url=document.getElementById('syncUrl').value.trim(); SYNC.err='';
@@ -2963,7 +3033,9 @@ document.getElementById('syncTest').addEventListener('click',function(){
 });
 document.getElementById('leaveViewer').addEventListener('click',function(e){
   e.preventDefault();
-  location.href=location.href.split('#')[0];
+  if(VIEWER){ location.href=location.href.split('#')[0]; return; }
+  var off=document.querySelector('[data-sm="off"]');
+  if(off) off.click();
 });
 document.getElementById('expMine').addEventListener('click',function(){exportText('mine');});
 document.getElementById('expAll').addEventListener('click',function(){exportText('all');});
@@ -3018,13 +3090,17 @@ try{
   applyScale(parseFloat(localStorage.getItem('ffscale'))||1);
   applyTheme(localStorage.getItem('fftheme')||'dark');
 }catch(e){ applyTheme('dark'); }
+try{ SIMPLE=localStorage.getItem('ffsimple')!=='0'; }catch(e){}
+var vs=document.getElementById('vwSimple'),vf=document.getElementById('vwFull');
+if(vs&&vf){ vs.className=SIMPLE?'on':''; vf.className=SIMPLE?'':'on'; }
 var hash=(location.hash||'');
 if(hash.indexOf('#watch=')===0){
   // Viewer: build state purely from the link, never touch stored data.
   enterViewer();
   var derr=decodeState(decodeURIComponent(hash.slice(7)));
   initNames(); viewTeam=ME(); computeRepl(); computeStartQual(); computeRoom(); redraw(); drawSwatches();
-  if(derr){ var vb=document.getElementById('viewerBar'); if(vb) vb.textContent=derr; }
+  applyMode();
+  if(derr){ var rt=document.getElementById('roTitle'); if(rt) rt.textContent=derr; }
 } else {
   load(); initNames(); viewTeam=ME(); computeRepl(); computeStartQual(); computeRoom(); redraw(); drawSwatches();
   try{
@@ -3033,8 +3109,8 @@ if(hash.indexOf('#watch=')===0){
       var ui=document.getElementById('syncUrl'); if(ui) ui.value=SYNC.url;
       Array.prototype.forEach.call(document.querySelectorAll('[data-sm]'),function(b){
         b.className=b.getAttribute('data-sm')===SYNC.mode?'on':'';});
-      syncStart();
-    } else drawSync();
+      applyMode(); syncStart();
+    } else { applyMode(); drawSync(); }
   }catch(e){}
 }
 
