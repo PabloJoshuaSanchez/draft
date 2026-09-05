@@ -177,7 +177,7 @@
     border:1px solid var(--ln2);color:var(--dimr);font-size:10px;font-weight:700;cursor:pointer;
     background:transparent;margin-left:5px;padding:0;font-family:var(--fb);flex-shrink:0;}
   .info:hover{color:var(--ac);border-color:var(--ac);}
-  .pop{position:fixed;z-index:300;max-width:330px;background:var(--s2);border:1px solid var(--ln2);
+  .pop{position:fixed;z-index:1100;max-width:330px;background:var(--s2);border:1px solid var(--ln2);
     border-radius:7px;padding:12px 14px;font-size:12px;line-height:1.6;box-shadow:0 14px 34px rgba(0,0,0,.75);display:none;}
   .pop.on{display:block;}
   .pop p{margin:0 0 8px;} .pop p:last-child{margin:0;}
@@ -359,7 +359,7 @@
     line-height:1;margin-left:5px;vertical-align:middle;font-family:var(--fb);}
   .ilog:hover{color:var(--ac);border-color:var(--ac);}
   .ilog.none{opacity:.3;}
-  .ov{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:400;display:none;align-items:center;justify-content:center;padding:16px;}
+  .ov{position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:1000;display:none;align-items:center;justify-content:center;padding:16px;}
   .ov.on{display:flex;}
   .md{background:var(--s1);border:1px solid var(--ln2);border-radius:9px;max-width:460px;width:100%;max-height:86vh;overflow:auto;}
   .mdh{padding:12px 15px;border-bottom:1px solid var(--ln);display:flex;justify-content:space-between;align-items:center;}
@@ -465,6 +465,9 @@
   [data-simple="1"] .tab[data-t="insights"]{display:none;}
   .robar{background:var(--ac);color:var(--acfg);padding:7px 13px;font-size:12px;
     font-weight:700;text-align:center;display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;}
+  /* display:flex above outranks the browser's [hidden]{display:none}, so the
+     banner stayed on screen in Off and Publish. Author rule has to say it. */
+  .robar[hidden]{display:none;}
   .robar .rosub{font-weight:400;opacity:.85;font-size:11px;}
   .robar a{color:var(--acfg);text-decoration:underline;font-weight:400;}
   .empty{text-align:center;padding:26px 15px;color:var(--dimr);font-size:12px;line-height:1.6;}
@@ -761,12 +764,15 @@
       <div class="sfl">Snapshot link &mdash; no setup, works anywhere</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px;">
         <button class="btn s p" id="shCopy">Copy view link</button>
+        <button class="btn s" id="shWatch">Copy live watch link</button>
         <span id="shMsg" style="font-size:11px;color:var(--dim);"></span>
       </div>
       <textarea class="exp" id="shOut" readonly style="min-height:70px;font-size:10.5px;" placeholder="Press Copy view link."></textarea>
       <div style="font-size:10.5px;color:var(--dimr);margin-top:7px;line-height:1.55;">
-        The whole board travels inside the link, so nothing is stored anywhere and no account is needed.
-        Send a fresh link whenever you want them caught up. Opening one is read-only and cannot touch their own board.
+        <b>View link</b> carries the whole board inside the URL &mdash; nothing stored anywhere, no account,
+        works even if a service is down. Send a fresh one whenever you want them caught up.<br>
+        <b>Live watch link</b> needs your Live sync URL set below. Whoever opens it lands straight in a
+        live read-only session with nothing to set up, and it never touches their own board.
       </div>
 
       <div class="sfl" style="margin-top:16px;">Live sync &mdash; needs a sync URL</div>
@@ -2549,7 +2555,16 @@ function deletePick(idx){
 //
 // Picks compress well: pickIndex is just position in the list and teamIndex is
 // derivable from the snake, so only the player id sequence has to travel.
-var VIEWER=false, SYNC={mode:'off',url:'',last:0,err:'',timer:null,pushing:false};
+var VIEWER=false, LIVELINK=false;
+var SYNC={mode:'off',url:'',last:0,err:'',timer:null,pushing:false};
+// A watch link carries the sync URL in the hash, so the person opening it lands
+// in a live, read-only session with nothing to configure. It deliberately does
+// NOT persist to their storage - closing the tab leaves their own app as it was.
+function watchUrl(){
+  var u=(document.getElementById('syncUrl')||{}).value||SYNC.url;
+  if(!u) return '';
+  return location.href.split('#')[0]+'#live='+encodeURIComponent(u.trim());
+}
 
 function encodeState(){
   var ids=draftLog.map(function(h){
@@ -2609,6 +2624,7 @@ function applyMode(){
     b.hidden=!ro;
     var t=document.getElementById('roTitle'),su=document.getElementById('roSub');
     if(t) t.textContent = VIEWER ? 'Watching a shared snapshot' : 'Watching live';
+    if(LIVELINK&&t) t.textContent='Watching live';
     if(su){
       su.textContent = VIEWER
         ? 'Read only. Your own board is untouched.'
@@ -2616,7 +2632,7 @@ function applyMode(){
                     :'Read only \u00b7 waiting for the first pick');
     }
     var lv=document.getElementById('leaveViewer');
-    if(lv) lv.textContent = VIEWER?'Leave':'Stop watching';
+    if(lv){ lv.textContent = VIEWER?'Leave':'Stop watching'; lv.hidden=LIVELINK; }
   }
   // If a hidden tab was the active one, fall back to the board.
   if(ro&&SIMPLE){
@@ -3001,7 +3017,7 @@ Array.prototype.forEach.call(document.querySelectorAll('[data-sm]'),function(b){
     SYNC.mode=b.getAttribute('data-sm');
     SYNC.url=document.getElementById('syncUrl').value.trim();
     SYNC.err='';
-    try{localStorage.setItem('ffsync',JSON.stringify({mode:SYNC.mode,url:SYNC.url}));}catch(e){}
+    if(!LIVELINK){ try{localStorage.setItem('ffsync',JSON.stringify({mode:SYNC.mode,url:SYNC.url}));}catch(e){} }
     // Leaving watch mode restores whatever board this device had of its own,
     // since watching only ever held the publisher's picks in memory.
     if(was==='watch'&&SYNC.mode!=='watch'&&!VIEWER){
@@ -3014,8 +3030,18 @@ Array.prototype.forEach.call(document.querySelectorAll('[data-sm]'),function(b){
 });
 document.getElementById('syncUrl').addEventListener('change',function(e){
   SYNC.url=e.target.value.trim(); SYNC.err='';
-  try{localStorage.setItem('ffsync',JSON.stringify({mode:SYNC.mode,url:SYNC.url}));}catch(e){}
+  if(!LIVELINK){ try{localStorage.setItem('ffsync',JSON.stringify({mode:SYNC.mode,url:SYNC.url}));}catch(e){} }
   syncStart();
+});
+document.getElementById('shWatch').addEventListener('click',function(){
+  var u=watchUrl(),m=document.getElementById('shMsg'),t=document.getElementById('shOut');
+  if(!u){ m.textContent='Enter a sync URL under Live sync first.'; setTimeout(function(){m.textContent='';},4000); return; }
+  t.value=u; t.select();
+  var ok=false;
+  try{ok=document.execCommand('copy');}catch(e){}
+  if(!ok&&navigator&&navigator.clipboard){try{navigator.clipboard.writeText(u);ok=true;}catch(e){}}
+  m.textContent=ok?'Watch link copied':'Select the text below and copy it';
+  setTimeout(function(){m.textContent='';},4000);
 });
 document.getElementById('vwSimple').addEventListener('click',function(){
   SIMPLE=true; this.className='on'; document.getElementById('vwFull').className='';
@@ -3094,7 +3120,16 @@ try{ SIMPLE=localStorage.getItem('ffsimple')!=='0'; }catch(e){}
 var vs=document.getElementById('vwSimple'),vf=document.getElementById('vwFull');
 if(vs&&vf){ vs.className=SIMPLE?'on':''; vf.className=SIMPLE?'':'on'; }
 var hash=(location.hash||'');
-if(hash.indexOf('#watch=')===0){
+if(hash.indexOf('#live=')===0){
+  // Watch link: live read-only, configured entirely from the URL.
+  LIVELINK=true;
+  SYNC.mode='watch'; SYNC.url=decodeURIComponent(hash.slice(6));
+  var ui0=document.getElementById('syncUrl'); if(ui0) ui0.value=SYNC.url;
+  Array.prototype.forEach.call(document.querySelectorAll('[data-sm]'),function(b){
+    b.className=b.getAttribute('data-sm')==='watch'?'on':'';});
+  initNames(); viewTeam=ME(); computeRepl(); computeStartQual(); computeRoom();
+  applyMode(); redraw(); drawSwatches(); syncStart();
+} else if(hash.indexOf('#watch=')===0){
   // Viewer: build state purely from the link, never touch stored data.
   enterViewer();
   var derr=decodeState(decodeURIComponent(hash.slice(7)));
