@@ -37,13 +37,27 @@
     --QB:#963f52; --RB:#2d5f8a; --WR:#1f6f5c; --TE:#8a5717; --DST:#5f4a86;
   }
   /* High contrast - Slack "night sky" palette the user supplied */
+  /* High contrast, built on the supplied Slack palette. The palette lists
+     #101010 twice; using it for both page and card gave cards no separation
+     at all, which is what made everything look flat. Surfaces now step up. */
   [data-theme="contrast"]{
-    --bg:#101010; --s1:#101010; --s2:#1c1c1c; --s3:#424242;
-    --ln:#424242; --ln2:#6a6a6a;
-    --tx:#F0F0E6; --dim:#D3D3CA; --dimr:#9a9a92;
-    --ac:#BB313E; --acfg:#F0F0E6; --urg:#BB313E; --ok:#D3D3CA;
-    --tgbg:rgba(187,49,62,.18); --posfill:.30;
-    --QB:#e07a86; --RB:#7fb2e0; --WR:#6fd0b6; --TE:#e0a86f; --DST:#b39ce0;
+    --bg:#0a0a0a; --s1:#1b1b1b; --s2:#282828; --s3:#3a3a3a;
+    --ln:#4d4d4d; --ln2:#6f6f6f;
+    --tx:#F0F0E6; --dim:#D3D3CA; --dimr:#8f8f88;
+    --ac:#BB313E; --acfg:#F0F0E6; --urg:#E8505C; --ok:#8FCB9B;
+    --tgbg:rgba(187,49,62,.22); --posfill:.34;
+    --QB:#f08a96; --RB:#8fc0ee; --WR:#7fdcc2; --TE:#eeb87f; --DST:#c0aaee;
+  }
+  /* Slate - wider luminance steps between page, card and header, brighter
+     primary text, and stronger borders. Built for the "everything flattens"
+     complaint: each surface should read as a distinct layer. */
+  [data-theme="slate"]{
+    --bg:#0a0a0c; --s1:#16161a; --s2:#22222a; --s3:#2f2f39;
+    --ln:#3a3a46; --ln2:#565664;
+    --tx:#f6f6f9; --dim:#a9a9b8; --dimr:#70707f;
+    --ac:#ffb638; --acfg:#14140f; --urg:#ff5f56; --ok:#3ecf8e;
+    --tgbg:rgba(255,182,56,.13); --posfill:.26;
+    --QB:#f5788d; --RB:#6aa9ff; --WR:#3fd6ad; --TE:#ff9f45; --DST:#b18cff;
   }
   [data-theme="contrast"] .btn{border-color:var(--ln2);}
   [data-theme="contrast"] th{color:var(--dim);}
@@ -121,7 +135,13 @@
   .plr.mine .plt{color:var(--ac);font-weight:700;}
   .plp{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .cheatcols{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:11px;align-items:start;}
-  .cscol{background:var(--s1);border:1px solid var(--ln);border-radius:8px;overflow:hidden;}
+  .cscol{background:var(--s1);border:1px solid var(--ln);border-radius:8px;overflow:hidden;
+    display:flex;flex-direction:column;max-height:74vh;}
+  .csbody{overflow-y:auto;-webkit-overflow-scrolling:touch;flex:1;}
+  .csmore{border:none;border-top:1px solid var(--ln);background:var(--s2);color:var(--dim);
+    font-family:var(--fb);font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;
+    padding:8px;cursor:pointer;width:100%;}
+  .csmore:hover{color:var(--ac);}
   .csh{padding:9px 12px;background:var(--s2);border-bottom:1px solid var(--ln);
     display:flex;align-items:center;gap:7px;}
   .csh h3{margin:0;font-size:11px;letter-spacing:1.2px;text-transform:uppercase;font-weight:800;}
@@ -380,6 +400,22 @@
   .sm{font-size:10px;color:var(--dim);margin-top:2px;font-family:var(--fm);}
 
   /* setup */
+  .thgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:7px;}
+  .thb{border:1px solid var(--ln2);border-radius:6px;padding:0;cursor:pointer;overflow:hidden;
+    background:transparent;font-family:var(--fb);text-align:left;}
+  .thb.on{border-color:var(--ac);box-shadow:0 0 0 1px var(--ac);}
+  .thsw{display:flex;height:26px;}
+  .thsw span{flex:1;}
+  .thn{padding:6px 8px;font-size:10.5px;font-weight:700;letter-spacing:.5px;
+    text-transform:uppercase;color:var(--dim);}
+  .thb.on .thn{color:var(--ac);}
+  .swgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:7px;}
+  .sw{display:flex;align-items:center;gap:8px;background:var(--s2);border:1px solid var(--ln);
+    border-radius:6px;padding:6px 9px;}
+  .sw input[type=color]{width:26px;height:26px;padding:0;border:1px solid var(--ln2);
+    border-radius:4px;background:transparent;cursor:pointer;flex-shrink:0;}
+  .swl{font-size:10.5px;color:var(--dim);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .swv{font-family:var(--fm);font-size:9px;color:var(--dimr);}
   .setg{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:10px;margin-bottom:13px;}
   .sf{background:var(--s1);border:1px solid var(--ln);border-radius:7px;padding:11px 12px;}
   .sfl{font-size:8.5px;text-transform:uppercase;letter-spacing:1px;color:var(--dimr);margin-bottom:6px;}
@@ -609,6 +645,11 @@
         <button id="csAvail" class="on">Hide drafted</button>
         <button id="csAll">Show all</button>
       </span>
+      <span class="seg" id="csDepth">
+        <button data-cd="10">Top 10</button>
+        <button data-cd="25" class="on">Top 25</button>
+        <button data-cd="0">All</button>
+      </span>
       <button class="info" data-info="cheat">i</button>
       <span style="font-size:10.5px;color:var(--dimr);margin-left:auto;">
         Tiers are projection gaps. Your up/down ratings move players between them.
@@ -625,14 +666,42 @@
       <div class="sf"><div class="sfl">Your draft slot</div><select class="sfi" id="cfgSlot"></select></div>
       <div class="sf"><div class="sfl">Teams</div><select class="sfi" id="cfgTeams"></select></div>
       <div class="sf"><div class="sfl">Rounds</div><select class="sfi" id="cfgRounds"></select></div>
-      <div class="sf"><div class="sfl">Theme</div>
-        <span class="seg" style="width:100%;">
-          <button id="thDark" style="flex:1">Dark</button>
-          <button id="thLight" style="flex:1">Light</button>
-          <button id="thContrast" style="flex:1">Contrast</button>
-        </span>
-      </div>
+
     </div></div>
+  </div>
+  <div class="card"><div class="ch"><h3>Appearance</h3><button class="info" data-info="appearance">i</button></div>
+    <div class="cb">
+      <div class="sfl">Theme</div>
+      <div class="thgrid" id="thGrid"></div>
+
+      <div class="sfl" style="margin-top:16px;">Text size</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <span class="seg">
+          <button data-sz="0.92">S</button>
+          <button data-sz="1" class="on">M</button>
+          <button data-sz="1.12">L</button>
+          <button data-sz="1.28">XL</button>
+        </span>
+        <span style="font-size:11px;color:var(--dimr);">Scales the whole layout, so buttons and rows grow with the type.</span>
+      </div>
+
+      <div style="margin-top:16px;">
+        <div class="sfl">Custom colours <span style="text-transform:none;letter-spacing:0;color:var(--dimr);font-weight:400;">&mdash; pick a theme to start from, then adjust</span></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:11px;align-items:center;">
+          <span style="font-size:10.5px;color:var(--dimr);">Start from</span>
+          <span class="seg" id="cbase">
+            <button data-cb="dark">Dark</button>
+            <button data-cb="slate">Slate</button>
+            <button data-cb="light">Light</button>
+            <button data-cb="contrast">Contrast</button>
+          </span>
+          <button class="btn s g" id="cReset">Reset custom</button>
+        </div>
+        <div class="swgrid" id="swCore"></div>
+        <div class="sfl" style="margin-top:13px;">Position colours</div>
+        <div class="swgrid" id="swPos"></div>
+      </div>
+    </div>
   </div>
   <div class="card"><div class="ch"><h3>Roster rules</h3><button class="info" data-info="roster">i</button></div>
     <div class="cb"><div class="setg" style="margin-bottom:0;">
@@ -705,15 +774,63 @@ var CFG={teams:12,slot:6,rounds:16,start:{QB:1,RB:2,WR:2,TE:1,DST:1},flex:2,
 var KEY='ffwarroom5';
 var COLSETS={
   dark:    {QB:'#a85a6b',RB:'#4d7ea8',WR:'#3f927e',TE:'#a8763f',DST:'#806aa0',K:'#666'},
+  slate:   {QB:'#f5788d',RB:'#6aa9ff',WR:'#3fd6ad',TE:'#ff9f45',DST:'#b18cff',K:'#8a8a99'},
   light:   {QB:'#963f52',RB:'#2d5f8a',WR:'#1f6f5c',TE:'#8a5717',DST:'#5f4a86',K:'#777'},
-  contrast:{QB:'#e07a86',RB:'#7fb2e0',WR:'#6fd0b6',TE:'#e0a86f',DST:'#b39ce0',K:'#D3D3CA'}
+  contrast:{QB:'#f08a96',RB:'#8fc0ee',WR:'#7fdcc2',TE:'#eeb87f',DST:'#c0aaee',K:'#D3D3CA'}
 };
+var THEMES=['dark','slate','light','contrast','custom'];
+// Every variable the custom theme exposes, with a label and which base it
+// starts from. Editing these live is the quickest way to find a palette you
+// like; THEMES.md explains how to bake a favourite into the file permanently.
+var CUSTOMVARS=[
+  ['--bg','Page background'],['--s1','Card'],['--s2','Card header'],['--s3','Raised / inputs'],
+  ['--ln','Borders'],['--tx','Text'],['--dim','Muted text'],
+  ['--ac','Accent'],['--urg','Urgent'],['--ok','Positive']
+];
+var CUSTOMPOS=[['--QB','QB'],['--RB','RB'],['--WR','WR'],['--TE','TE'],['--DST','DST']];
+var CUSTOM={};
+var TSCALE=1;
 var COL=COLSETS.dark;
+
+function readVar(n){
+  try{ return getComputedStyle(document.documentElement).getPropertyValue(n).trim()||'#888'; }
+  catch(e){ return '#888'; }
+}
 function applyTheme(t){
-  THEME=(t==='light'||t==='contrast')?t:'dark';
-  COL=COLSETS[THEME];
-  if(document.documentElement) document.documentElement.setAttribute('data-theme',THEME);
-  try{localStorage.setItem('fftheme',THEME);}catch(e){}
+  THEME=(THEMES.indexOf(t)>-1)?t:'dark';
+  var base = THEME==='custom' ? (CUSTOM._base||'dark') : THEME;
+  if(document.documentElement){
+    document.documentElement.setAttribute('data-theme',base);
+    // clear any previous custom overrides before re-applying
+    CUSTOMVARS.concat(CUSTOMPOS).forEach(function(v){
+      document.documentElement.style.removeProperty(v[0]);
+    });
+    document.documentElement.style.removeProperty('--ln2');
+    document.documentElement.style.removeProperty('--dimr');
+  }
+  COL=COLSETS[base]||COLSETS.dark;
+  if(THEME==='custom'&&document.documentElement){
+    Object.keys(CUSTOM).forEach(function(k){
+      if(k.charAt(0)==='-') document.documentElement.style.setProperty(k,CUSTOM[k]);
+    });
+    COL={
+      QB:CUSTOM['--QB']||COL.QB, RB:CUSTOM['--RB']||COL.RB, WR:CUSTOM['--WR']||COL.WR,
+      TE:CUSTOM['--TE']||COL.TE, DST:CUSTOM['--DST']||COL.DST, K:COL.K
+    };
+  }
+  try{
+    localStorage.setItem('fftheme',THEME);
+    localStorage.setItem('ffcustom',JSON.stringify(CUSTOM));
+  }catch(e){}
+}
+// Text size scales the whole layout, not just glyphs - buttons and rows grow
+// with the type so tap targets stay proportionate.
+function applyScale(s){
+  TSCALE=Math.max(0.9,Math.min(1.45,s||1));
+  try{
+    if(document.documentElement) document.documentElement.style.zoom=TSCALE;
+    localStorage.setItem('ffscale',String(TSCALE));
+  }catch(e){}
 }
 // Translucent position fill for the draft board, so a cell reads at a glance.
 function posFill(pos){
@@ -745,6 +862,7 @@ var INFO={
  flow:"<p>The draft top to bottom, pick 1 through the end, with round markers. Logged picks are solid; greyed italic rows project the rest assuming ADP order.</p><p>That assumption breaks the moment someone reaches, so treat the projection as a sketch of which <b>tier</b> reaches your next pick, not which name. Reaches are marked in red.</p><p>Tap any logged pick to correct it.</p>",
  needs:"<p>Unfilled starting slots per team. Before your turn comes, scan the teams picking between now and then &mdash; their gaps are the positions about to disappear.</p>",
  depth:"<p>Players left who project above a replacement starter. The honest measure of whether you can wait: twenty quality players left means no urgency, however many just went.</p><p>Tap any bar to see exactly who.</p>",
+ appearance:"<p><b>Themes</b> are sets of CSS variables. Dark and Slate are both low-light; Slate has wider gaps between page, card and header, so panels read as distinct layers rather than one flat sheet. Contrast uses the supplied palette with a proper elevation ramp added.</p><p><b>Custom</b> starts from whichever theme you pick, then every colour is a picker. Changes apply instantly and persist. Reset returns you to Dark.</p><p><b>Text size</b> scales the whole layout rather than just the glyphs, so buttons and rows stay proportionate. Browser zoom works too.</p>",
  cheat:"<p>Players grouped into tiers by projected points, with the cut placed at natural gaps rather than fixed intervals &mdash; the point of a tier is that everyone inside it is roughly interchangeable, so the boundary belongs where the drop-off actually is.</p><p>Drafted players are struck through. Your starred targets carry a star and an amber bar. A tier header turns amber when a third or less of it remains, which is your cue that waiting is about to cost you.</p><p><b>My Read</b> is built in: marking a player up or down shifts his value by 6% a step, which can lift him into the tier above or drop him below. The arrow beside his name shows it.</p>",
  runway:"<p>For each position: how many quality players are left, how fast the room is taking them, and &mdash; the part that matters &mdash; how many of <b>your remaining picks</b> land before that pool empties.</p><p>\"Gone before your next pick\" means if you want one, it is this turn. \"3 of your picks still land in it\" means you can comfortably wait.</p><p>Rate is measured over the last 24 picks, so it reacts to runs rather than averaging the whole draft.</p>",
  byteam:"<p>What each team has drafted. Teams already stacked at a position rarely take another. Tap a row for their picks.</p>",
@@ -2116,7 +2234,7 @@ function drawPickLog(){
 // interchangeable, so the boundary belongs wherever the drop-off actually is.
 // Your up/down rating shifts a player's value, so marking someone up can lift
 // him into the tier above; that is the intent, not a side effect.
-var csShowAll=false;
+var csShowAll=false, csDepth=25, csExpanded={};
 function adjVal(p){
   if(p.proj===null) return null;
   return p.proj*(1+0.06*(p.bump||0));
@@ -2166,12 +2284,23 @@ function cutTiers(list,val,opts){
 function csColumn(title,tiers,colr,showPos){
   var totalLeft=0,total=0;
   tiers.forEach(function(t){t.forEach(function(p){total++;if(!p.drafted)totalLeft++;});});
-  var h='<div class="cscol"><div class="csh"><h3 style="color:'+(colr||'var(--tx)')+'">'+title+'</h3>'+
-    '<span class="cx">'+totalLeft+'/'+total+'</span></div>';
+  var key=title.toLowerCase();
+  var cap=csExpanded[key]?0:csDepth;      // 0 means no limit
+  var shown=0,truncated=0,body='';
   tiers.forEach(function(t,ti){
     var left=t.filter(function(p){return !p.drafted;}).length;
     var cls=left===0?'gone':(left<=Math.max(1,Math.round(t.length*0.34))?'thin':'');
-    var rows=t.filter(function(p){return csShowAll||!p.drafted;}).map(function(p){
+    var vis=t.filter(function(p){return csShowAll||!p.drafted;});
+    if(!vis.length) return;
+    // The cap counts players actually on screen, so a column shows the top N
+    // available rather than the top N tiers - which is what you scan for.
+    var take=[];
+    vis.forEach(function(p){
+      if(cap&&shown>=cap){ truncated++; return; }
+      take.push(p); shown++;
+    });
+    if(!take.length) return;
+    var rows=take.map(function(p){
       return '<div class="csr'+(p.drafted?' drafted':'')+(p.target?' tgt':'')+'">'+
         '<span class="csi">'+(p.target?'\u2605':'')+'</span>'+
         (showPos?'<span class="csb" style="color:'+COL[p.pos]+'">'+p.pos+'</span>':'')+
@@ -2181,11 +2310,16 @@ function csColumn(title,tiers,colr,showPos){
           (p.bump>0?'\u25b2':'\u25bc')+(Math.abs(p.bump)>1?Math.abs(p.bump):'')+'</span>':'')+
         '</div>';
     }).join('');
-    if(!rows&&!csShowAll) return;
-    h+='<div class="cst '+cls+'">Tier '+(ti+1)+'<span class="n">'+left+'/'+t.length+'</span></div>'+rows;
+    body+='<div class="cst '+cls+'">Tier '+(ti+1)+'<span class="n">'+left+'/'+t.length+'</span></div>'+rows;
   });
-  return h+'</div>';
+  var more='';
+  if(truncated) more='<button class="csmore" data-more="'+key+'">Show '+truncated+' more</button>';
+  else if(csExpanded[key]&&cap===0&&csDepth) more='<button class="csmore" data-more="'+key+'">Show less</button>';
+  return '<div class="cscol"><div class="csh"><h3 style="color:'+(colr||'var(--tx)')+'">'+title+'</h3>'+
+    '<span class="cx">'+totalLeft+'/'+total+'</span></div>'+
+    '<div class="csbody">'+body+'</div>'+more+'</div>';
 }
+
 function drawCheat(){
   var e=document.getElementById('cheatCols'); e.innerHTML='';
   var html=csColumn('Overall',overallTiers(),'var(--tx)',true);
@@ -2195,6 +2329,13 @@ function drawCheat(){
   });
   e.innerHTML=html;
   wire(e);
+  Array.prototype.forEach.call(e.querySelectorAll('[data-more]'),function(b){
+    b.addEventListener('click',function(){
+      var k=b.getAttribute('data-more');
+      csExpanded[k]=!csExpanded[k];
+      drawCheat();
+    });
+  });
 }
 function drawQuick(){
   var box=document.getElementById('qres'),v=document.getElementById('q').value.trim();
@@ -2446,6 +2587,7 @@ function redraw(){
   drawHeader(); drawNudge(); drawStrip(); drawAlerts(); drawGaps(); drawRecs();
   drawWait(); drawRoom(); drawAtRisk();
   drawPlayers(); drawTargets(); drawFlow(); drawLogTable(); drawPickLog(); drawCheat();
+  drawThemes();
   drawNeeds(); drawDepth(); drawRunway(); drawByTeam(); drawValues(); drawRoster();
   drawBoard(); drawSetup();
 }
@@ -2476,6 +2618,12 @@ Array.prototype.forEach.call(document.querySelectorAll('[data-bp]'),function(b){
 });
 document.getElementById('bManual').addEventListener('click',function(){
   var n=prompt('Player name?'); if(n&&n.trim()) manual(n.trim());
+});
+Array.prototype.forEach.call(document.querySelectorAll('[data-cd]'),function(b){
+  b.addEventListener('click',function(){
+    Array.prototype.forEach.call(document.querySelectorAll('[data-cd]'),function(x){x.className='';});
+    b.className='on'; csDepth=parseInt(b.getAttribute('data-cd'),10); csExpanded={}; drawCheat();
+  });
 });
 document.getElementById('csAvail').addEventListener('click',function(){
   csShowAll=false; this.className='on';
@@ -2527,16 +2675,70 @@ document.getElementById('btnReset').addEventListener('click',function(){
   draftLog=[]; save(); redraw(); drawQuick();
 });
 document.getElementById('tsel').addEventListener('change',function(e){viewTeam=parseInt(e.target.value,10);drawRoster();});
-function setTheme(t){
-  applyTheme(t);
-  ['Dark','Light','Contrast'].forEach(function(n){
-    document.getElementById('th'+n).className = (THEME===n.toLowerCase())?'on':'';
+var THEMEMETA=[
+  ['dark','Dark',['#101010','#1e1e1e','#e0a832','#eaeaea']],
+  ['slate','Slate',['#0a0a0c','#22222a','#ffb638','#f6f6f9']],
+  ['light','Light',['#f4f3ef','#eceae4','#9a6b12','#1b1b19']],
+  ['contrast','Contrast',['#0a0a0a','#282828','#BB313E','#F0F0E6']],
+  ['custom','Custom',['#333','#555','#888','#ccc']]
+];
+function drawThemes(){
+  var g=document.getElementById('thGrid'); if(!g) return;
+  g.innerHTML='';
+  THEMEMETA.forEach(function(m){
+    var sw=m[2];
+    if(m[0]==='custom'&&CUSTOM['--bg']) sw=[CUSTOM['--bg']||'#333',CUSTOM['--s2']||'#555',CUSTOM['--ac']||'#888',CUSTOM['--tx']||'#ccc'];
+    var b=document.createElement('button');
+    b.className='thb'+(THEME===m[0]?' on':'');
+    b.innerHTML='<span class="thsw">'+sw.map(function(x){return '<span style="background:'+x+'"></span>';}).join('')+'</span>'+
+      '<span class="thn">'+m[1]+'</span>';
+    b.addEventListener('click',function(){setTheme(m[0]);});
+    g.appendChild(b);
   });
-  redraw();
+  Array.prototype.forEach.call(document.querySelectorAll('[data-cb]'),function(b){
+    b.className=(CUSTOM._base||'dark')===b.getAttribute('data-cb')?'on':'';
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-sz]'),function(b){
+    b.className=(Math.abs(parseFloat(b.getAttribute('data-sz'))-TSCALE)<0.01)?'on':'';
+  });
 }
-document.getElementById('thDark').addEventListener('click',function(){setTheme('dark');});
-document.getElementById('thLight').addEventListener('click',function(){setTheme('light');});
-document.getElementById('thContrast').addEventListener('click',function(){setTheme('contrast');});
+function drawSwatches(){
+  function fill(hostId,list){
+    var h=document.getElementById(hostId); if(!h) return;
+    h.innerHTML='';
+    list.forEach(function(v){
+      var cur=CUSTOM[v[0]]||readVar(v[0])||'#888888';
+      if(cur.charAt(0)!=='#') cur='#888888';
+      var d=document.createElement('div'); d.className='sw';
+      d.innerHTML='<input type="color" value="'+cur+'" data-cv="'+v[0]+'">'+
+        '<span class="swl">'+v[1]+'<br><span class="swv">'+cur+'</span></span>';
+      h.appendChild(d);
+    });
+    Array.prototype.forEach.call(h.querySelectorAll('[data-cv]'),function(inp){
+      inp.addEventListener('input',function(){
+        CUSTOM[inp.getAttribute('data-cv')]=inp.value;
+        if(!CUSTOM._base) CUSTOM._base='dark';
+        THEME='custom'; applyTheme('custom'); redraw();
+      });
+    });
+  }
+  fill('swCore',CUSTOMVARS); fill('swPos',CUSTOMPOS);
+}
+function setTheme(t){ applyTheme(t); redraw(); }
+Array.prototype.forEach.call(document.querySelectorAll('[data-sz]'),function(b){
+  b.addEventListener('click',function(){ applyScale(parseFloat(b.getAttribute('data-sz'))); drawThemes(); });
+});
+Array.prototype.forEach.call(document.querySelectorAll('[data-cb]'),function(b){
+  b.addEventListener('click',function(){
+    CUSTOM={_base:b.getAttribute('data-cb')};
+    applyTheme(b.getAttribute('data-cb'));   // paint the base so pickers read its values
+    applyTheme('custom'); drawSwatches(); redraw();
+  });
+});
+document.getElementById('cReset').addEventListener('click',function(){
+  CUSTOM={}; try{localStorage.removeItem('ffcustom');}catch(e){}
+  applyTheme('dark'); drawSwatches(); redraw();
+});
 document.getElementById('cfgSlot').addEventListener('change',function(e){CFG.slot=parseInt(e.target.value,10);save();redraw();});
 function reshape(f,v){
   if(draftLog.length&&!confirm('You have '+draftLog.length+' picks logged. Changing this reshapes the board. Continue?')){drawSetup();return;}
@@ -2604,11 +2806,12 @@ q.addEventListener('keydown',function(e){
     if(qm.length) draft(qm[qsel].id); else if(q.value.trim()) manual(q.value.trim());}
 });
 
-try{ applyTheme(localStorage.getItem('fftheme')||'dark'); }catch(e){ applyTheme('dark'); }
-['Dark','Light','Contrast'].forEach(function(n){
-  var b=document.getElementById('th'+n); if(b) b.className=(THEME===n.toLowerCase())?'on':'';
-});
-load(); initNames(); viewTeam=ME(); computeRepl(); computeStartQual(); computeRoom(); redraw();
+try{
+  var cs=localStorage.getItem('ffcustom'); if(cs) CUSTOM=JSON.parse(cs)||{};
+  applyScale(parseFloat(localStorage.getItem('ffscale'))||1);
+  applyTheme(localStorage.getItem('fftheme')||'dark');
+}catch(e){ applyTheme('dark'); }
+load(); initNames(); viewTeam=ME(); computeRepl(); computeStartQual(); computeRoom(); redraw(); drawSwatches();
 
 // Offline support. Registration is wrapped because service workers need a
 // secure origin - opening index.html straight off disk will skip this quietly
