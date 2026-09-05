@@ -14,11 +14,13 @@
 <meta name="apple-mobile-web-app-title" content="War Room">
 <meta name="mobile-web-app-capable" content="yes">
 <style>
+  /* Depth comes from luminance gaps between adjacent surfaces. The old values
+     stepped only ~7 points from page to card, which is what made panels smear
+     into one sheet. Every theme here keeps a gap of at least 11. */
   :root, [data-theme="dark"]{
-    /* monochrome base - elevation carries structure, not colour */
-    --bg:#101010; --s1:#171717; --s2:#1e1e1e; --s3:#262626;
-    --ln:#2b2b2b; --ln2:#3a3a3a;
-    --tx:#eaeaea; --dim:#8f8f8f; --dimr:#5f5f5f;
+    --bg:#0c0c0c; --s1:#191919; --s2:#242424; --s3:#313131;
+    --ln:#3b3b3b; --ln2:#525252;
+    --tx:#f0f0f0; --dim:#9c9c9c; --dimr:#6a6a6a;
     /* two accents only: amber = concerns you now, red = urgent */
     --ac:#e0a832; --acfg:#0d0d0d; --urg:#d9534f; --ok:#5aa87a;
     --tgbg:rgba(224,168,50,.09); --posfill:.17;
@@ -28,25 +30,26 @@
     --fb:system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
     --fm:ui-monospace,'SF Mono','Cascadia Mono',Menlo,Consolas,monospace;
   }
-  [data-theme="light"]{
-    --bg:#f4f3ef; --s1:#ffffff; --s2:#eceae4; --s3:#e0ddd5;
-    --ln:#d5d1c8; --ln2:#bab5a9;
-    --tx:#1b1b19; --dim:#5f5c55; --dimr:#8b877e;
-    --ac:#9a6b12; --acfg:#ffffff; --urg:#b32d28; --ok:#2f7a4f;
-    --tgbg:rgba(154,107,18,.10); --posfill:.14;
-    --QB:#963f52; --RB:#2d5f8a; --WR:#1f6f5c; --TE:#8a5717; --DST:#5f4a86;
+  /* Paper - a light theme with genuine layering. Most light UIs fail by putting
+     white cards on a near-white page; here the page is warm grey and cards are
+     white, so panels lift off it. */
+  [data-theme="paper"]{
+    --bg:#e8e6e0; --s1:#ffffff; --s2:#f4f2ec; --s3:#e4e1d8;
+    --ln:#cdc9be; --ln2:#a8a293;
+    --tx:#17171a; --dim:#55524b; --dimr:#85817a;
+    --ac:#a35c07; --acfg:#ffffff; --urg:#b3241f; --ok:#1f6b45;
+    --tgbg:rgba(163,92,7,.12); --posfill:.16;
+    --QB:#9e3247; --RB:#1f5688; --WR:#146353; --TE:#8a4d0b; --DST:#573f80;
   }
-  /* High contrast - Slack "night sky" palette the user supplied */
-  /* High contrast, built on the supplied Slack palette. The palette lists
-     #101010 twice; using it for both page and card gave cards no separation
-     at all, which is what made everything look flat. Surfaces now step up. */
-  [data-theme="contrast"]{
-    --bg:#0a0a0a; --s1:#1b1b1b; --s2:#282828; --s3:#3a3a3a;
-    --ln:#4d4d4d; --ln2:#6f6f6f;
-    --tx:#F0F0E6; --dim:#D3D3CA; --dimr:#8f8f88;
-    --ac:#BB313E; --acfg:#F0F0E6; --urg:#E8505C; --ok:#8FCB9B;
-    --tgbg:rgba(187,49,62,.22); --posfill:.34;
-    --QB:#f08a96; --RB:#8fc0ee; --WR:#7fdcc2; --TE:#eeb87f; --DST:#c0aaee;
+  /* Ember - warm dark. Same separation discipline as Slate but on a brown-black
+     base, which reads softer under tungsten light than a blue-black screen. */
+  [data-theme="ember"]{
+    --bg:#0d0a08; --s1:#1b1613; --s2:#28211c; --s3:#372e27;
+    --ln:#443a32; --ln2:#635548;
+    --tx:#f7f1ea; --dim:#b3a698; --dimr:#7a6f64;
+    --ac:#ff9d3d; --acfg:#1a1006; --urg:#f2564b; --ok:#5fc98a;
+    --tgbg:rgba(255,157,61,.14); --posfill:.28;
+    --QB:#f07a86; --RB:#69a5d8; --WR:#4fc9a4; --TE:#ffab52; --DST:#b394e6;
   }
   /* Slate - wider luminance steps between page, card and header, brighter
      primary text, and stronger borders. Built for the "everything flattens"
@@ -59,16 +62,14 @@
     --tgbg:rgba(255,182,56,.13); --posfill:.26;
     --QB:#f5788d; --RB:#6aa9ff; --WR:#3fd6ad; --TE:#ff9f45; --DST:#b18cff;
   }
-  [data-theme="contrast"] .btn{border-color:var(--ln2);}
-  [data-theme="contrast"] th{color:var(--dim);}
-  [data-theme="contrast"] .pm{font-weight:800;}
+
   *{box-sizing:border-box;-webkit-tap-highlight-color:rgba(224,168,50,.14);}
   body{margin:0;background:var(--bg);color:var(--tx);font-family:var(--fb);min-height:100vh;
     padding-bottom:26px;-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%;}
   .wrap{max-width:1500px;margin:0 auto;padding:0 13px;}
 
   /* ── sticky header ── */
-  .top{position:sticky;top:0;z-index:60;background:var(--bg);border-bottom:1px solid var(--ln);}
+  .top{position:sticky;top:0;z-index:900;background:var(--bg);border-bottom:1px solid var(--ln);}
   .prog{height:2px;background:var(--s3);}
   .progf{height:100%;background:var(--ac);transition:width .3s;}
   .hdr{display:flex;align-items:center;gap:13px;padding:9px 0;flex-wrap:wrap;}
@@ -195,19 +196,19 @@
   .qrm{font-size:10px;color:var(--dim);font-family:var(--fm);}
 
   /* ── rec rows ── */
-  .rec{display:flex;gap:10px;padding:11px 13px;border-bottom:1px solid var(--ln);border-left:3px solid transparent;align-items:flex-start;}
+  .rec{display:flex;gap:10px;padding:10px 13px;border-bottom:1px solid var(--ln);border-left:3px solid transparent;align-items:center;}
   .rec:last-child{border-bottom:none;}
   .rec.top{background:var(--s2);}
   .rrk{font-family:var(--fm);font-size:11px;color:var(--dimr);width:14px;flex-shrink:0;padding-top:2px;}
   .rec.top .rrk{color:var(--ac);}
   .rmain{flex:1;min-width:0;}
   .rnm{font-size:15px;font-weight:700;margin-bottom:2px;}
-  .rmeta{font-size:10.5px;color:var(--dim);font-family:var(--fm);margin-bottom:6px;}
+  .rmeta{font-size:10.5px;color:var(--dim);font-family:var(--fm);}
   .rwhy{display:flex;flex-direction:column;gap:2px;}
   .rwhy div{font-size:11px;color:var(--dim);line-height:1.45;}
   .rwhy div.key{color:var(--tx);}
   .rwhy div.warn{color:var(--ac);}
-  .rside{display:flex;flex-direction:column;gap:5px;align-items:flex-end;flex-shrink:0;}
+  .rside{display:flex;gap:6px;align-items:center;flex-shrink:0;}
   .score{font-family:var(--fm);font-size:15px;color:var(--dim);}
   .rec.top .score{color:var(--ac);}
 
@@ -328,6 +329,14 @@
   .bg th.mine{color:var(--ac);}
   .bg td{border:1px solid var(--ln);padding:4px;font-size:9.5px;text-align:center;min-width:76px;max-width:98px;
     border-left-width:3px;border-left-color:transparent;}
+  .bg.fit{width:100%;table-layout:fixed;}
+  .bg.fit td,.bg.fit th{min-width:0;max-width:none;overflow:hidden;}
+  .bg.fit td{font-size:8.5px;padding:3px 2px;line-height:1.25;
+    white-space:nowrap;text-overflow:ellipsis;}
+  .bg.fit th{font-size:8.5px;padding:5px 2px;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;}
+  .bg.fit .bno{font-size:7px;}
+  .bg.fit .rl{width:22px;}
+  .bsc.fit{overflow-x:hidden;}
   .bg .rl{background:var(--s2);font-weight:700;color:var(--dimr);font-size:10px;position:sticky;left:0;z-index:1;
     min-width:30px;border-left-width:1px;}
   .bcell{cursor:pointer;}
@@ -442,6 +451,9 @@
   .al.urgent{border-left-color:var(--urg);color:#ef8b87;}
   .al.warn{border-left-color:var(--ac);color:var(--ac);}
   .al .ic{flex-shrink:0;font-size:10px;font-weight:800;letter-spacing:.5px;}
+  [data-viewer] .btn.p,[data-viewer] .star,[data-viewer] .bump,[data-viewer] .fedit,
+  [data-viewer] #btnUndo,[data-viewer] .qin,[data-viewer] .csmore{display:none!important;}
+  [data-viewer] .bcell{cursor:default;}
   .empty{text-align:center;padding:26px 15px;color:var(--dimr);font-size:12px;line-height:1.6;}
   .saveind{position:fixed;bottom:9px;right:9px;background:var(--s3);border:1px solid var(--ln2);
     color:var(--dim);font-size:9.5px;padding:5px 10px;border-radius:12px;opacity:0;transition:opacity .3s;
@@ -464,6 +476,10 @@
 </style>
 </head>
 <body>
+<div id="viewerBar" hidden style="background:var(--ac);color:var(--acfg);padding:7px 13px;font-size:12px;font-weight:700;text-align:center;">
+  Watching someone else's draft &mdash; read only. Your own board is untouched.
+  <a href="#" id="leaveViewer" style="color:var(--acfg);text-decoration:underline;margin-left:8px;font-weight:400;">Leave</a>
+</div>
 <div class="top"><div class="prog"><div class="progf" id="progf"></div></div><div class="wrap">
   <div class="hdr">
     <div class="hb"><div class="hl">Rd</div><div class="hv" id="hRnd">1</div></div>
@@ -501,10 +517,6 @@
           <div class="qres" id="qres"></div>
         </div>
       </div>
-      <div class="card" id="alertCard" hidden>
-        <div class="ch"><h3>Watch out</h3></div>
-        <div class="alerts" id="alerts"></div>
-      </div>
       <div class="card">
         <div class="ch"><h3>Best for you</h3><button class="info" data-info="advisor">i</button>
           <span class="cx" id="advPick"></span></div>
@@ -527,6 +539,10 @@
       <div class="card">
         <div class="ch"><h3>Targets at risk</h3><button class="info" data-info="atrisk">i</button></div>
         <div class="cb tight" id="atRisk"></div>
+      </div>
+      <div class="card" id="alertCard" hidden>
+        <div class="ch"><h3>Watch out</h3></div>
+        <div class="alerts" id="alerts"></div>
       </div>
     </div>
   </div>
@@ -592,6 +608,16 @@
 
 <!-- ══ BOARD ══ -->
 <div class="panel" id="p-board" hidden>
+  <div class="card">
+    <div class="ch"><h3>Draft board</h3>
+      <span class="seg" style="margin-left:auto;">
+        <button id="bgFit" class="on">Fit width</button>
+        <button id="bgWide">Wide</button>
+      </span>
+    </div>
+    <div class="bsc" id="bsc"><table class="bg fit" id="bg"></table></div>
+  </div>
+
   <div class="cols">
     <div>
       <div class="card">
@@ -609,7 +635,7 @@
           </div>
         </div>
         <div class="tsc" style="max-height:46vh;"><table>
-          <thead><tr><th style="width:28px;"></th><th>Player</th><th>Pos</th><th>Tm</th><th>Bye</th><th>Rd</th><th>Proj</th><th></th></tr></thead>
+          <thead><tr><th style="width:28px;"></th><th>Player</th><th>Pos</th><th>Tm</th><th>Bye</th><th>Rd</th><th>PPG</th><th></th></tr></thead>
           <tbody id="blogtb"></tbody>
         </table></div>
         <div class="cb" style="padding:9px 12px;border-top:1px solid var(--ln);">
@@ -623,11 +649,6 @@
         <div class="tsc" style="max-height:58vh;" id="pickLog"></div>
       </div>
     </div>
-  </div>
-
-  <div class="card">
-    <div class="ch"><h3>Draft board</h3><span class="cx">tap any pick to fix it</span></div>
-    <div class="bsc"><table class="bg" id="bg"></table></div>
   </div>
 
   <div class="card">
@@ -646,8 +667,8 @@
         <button id="csAll">Show all</button>
       </span>
       <span class="seg" id="csDepth">
-        <button data-cd="10">Top 10</button>
-        <button data-cd="25" class="on">Top 25</button>
+        <button data-cd="10" class="on">Top 10</button>
+        <button data-cd="25">Top 25</button>
         <button data-cd="0">All</button>
       </span>
       <button class="info" data-info="cheat">i</button>
@@ -692,8 +713,8 @@
           <span class="seg" id="cbase">
             <button data-cb="dark">Dark</button>
             <button data-cb="slate">Slate</button>
-            <button data-cb="light">Light</button>
-            <button data-cb="contrast">Contrast</button>
+            <button data-cb="ember">Ember</button>
+            <button data-cb="paper">Paper</button>
           </span>
           <button class="btn s g" id="cReset">Reset custom</button>
         </div>
@@ -720,6 +741,37 @@
   </div>
   <div class="card"><div class="ch"><h3>Team names</h3></div>
     <div class="cb"><div class="tnames" id="tnames"></div></div>
+  </div>
+  <div class="card"><div class="ch"><h3>Share the draft</h3><button class="info" data-info="share">i</button></div>
+    <div class="cb">
+      <div class="sfl">Snapshot link &mdash; no setup, works anywhere</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px;">
+        <button class="btn s p" id="shCopy">Copy view link</button>
+        <span id="shMsg" style="font-size:11px;color:var(--dim);"></span>
+      </div>
+      <textarea class="exp" id="shOut" readonly style="min-height:70px;font-size:10.5px;" placeholder="Press Copy view link."></textarea>
+      <div style="font-size:10.5px;color:var(--dimr);margin-top:7px;line-height:1.55;">
+        The whole board travels inside the link, so nothing is stored anywhere and no account is needed.
+        Send a fresh link whenever you want them caught up. Opening one is read-only and cannot touch their own board.
+      </div>
+
+      <div class="sfl" style="margin-top:16px;">Live sync &mdash; needs a sync URL</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px;">
+        <span class="seg" id="syncMode">
+          <button data-sm="off" class="on">Off</button>
+          <button data-sm="publish">Publish</button>
+          <button data-sm="watch">Watch</button>
+        </span>
+        <button class="btn s g" id="syncTest">Test now</button>
+      </div>
+      <input class="sfi" id="syncUrl" type="text" placeholder="https://your-db.firebaseio.com/draft/room1.json" style="font-family:var(--fm);font-size:12px;">
+      <div id="syncStatus" style="font-size:11px;margin-top:7px;"></div>
+      <div style="font-size:10.5px;color:var(--dimr);margin-top:7px;line-height:1.55;">
+        Publish sends the board after every pick. Watch polls the same URL every six seconds.
+        See SHARING.md for a five-minute Firebase setup. <b style="color:var(--ac)">Test this before the draft</b> &mdash;
+        it depends on a service outside this app, so it is the one part that can fail on the day.
+      </div>
+    </div>
   </div>
   <div class="card"><div class="ch"><h3>Export</h3><button class="info" data-info="export">i</button></div>
     <div class="cb">
@@ -765,7 +817,7 @@
 
 <div class="pop" id="pop"></div>
 <div class="saveind" id="saveInd">Saved</div>
-<footer>Runs offline &mdash; no network calls. Picks auto-save to this browser.</footer>
+
 
 <script>
 "use strict";
@@ -773,12 +825,12 @@ var CFG={teams:12,slot:6,rounds:16,start:{QB:1,RB:2,WR:2,TE:1,DST:1},flex:2,
          max:{QB:3,RB:6,WR:6,TE:3,DST:3}};
 var KEY='ffwarroom5';
 var COLSETS={
-  dark:    {QB:'#a85a6b',RB:'#4d7ea8',WR:'#3f927e',TE:'#a8763f',DST:'#806aa0',K:'#666'},
-  slate:   {QB:'#f5788d',RB:'#6aa9ff',WR:'#3fd6ad',TE:'#ff9f45',DST:'#b18cff',K:'#8a8a99'},
-  light:   {QB:'#963f52',RB:'#2d5f8a',WR:'#1f6f5c',TE:'#8a5717',DST:'#5f4a86',K:'#777'},
-  contrast:{QB:'#f08a96',RB:'#8fc0ee',WR:'#7fdcc2',TE:'#eeb87f',DST:'#c0aaee',K:'#D3D3CA'}
+  dark:  {QB:'#c06a7d',RB:'#5b91c4',WR:'#4aa691',TE:'#c08a4d',DST:'#9179b8',K:'#777'},
+  slate: {QB:'#f5788d',RB:'#6aa9ff',WR:'#3fd6ad',TE:'#ff9f45',DST:'#b18cff',K:'#8a8a99'},
+  ember: {QB:'#f07a86',RB:'#69a5d8',WR:'#4fc9a4',TE:'#ffab52',DST:'#b394e6',K:'#8a7d70'},
+  paper: {QB:'#9e3247',RB:'#1f5688',WR:'#146353',TE:'#8a4d0b',DST:'#573f80',K:'#777'}
 };
-var THEMES=['dark','slate','light','contrast','custom'];
+var THEMES=['dark','slate','ember','paper','custom'];
 // Every variable the custom theme exposes, with a label and which base it
 // starts from. Editing these live is the quickest way to find a palette you
 // like; THEMES.md explains how to bake a favourite into the file permanently.
@@ -828,7 +880,10 @@ function applyTheme(t){
 function applyScale(s){
   TSCALE=Math.max(0.9,Math.min(1.45,s||1));
   try{
-    if(document.documentElement) document.documentElement.style.zoom=TSCALE;
+    // Zoom on <html> makes it a containing block, which kills position:sticky
+    // and lets panels scroll over the header. Body is safe.
+    var b=document.body;
+    if(b){ if(TSCALE===1) b.style.removeProperty('zoom'); else b.style.zoom=TSCALE; }
     localStorage.setItem('ffscale',String(TSCALE));
   }catch(e){}
 }
@@ -862,6 +917,7 @@ var INFO={
  flow:"<p>The draft top to bottom, pick 1 through the end, with round markers. Logged picks are solid; greyed italic rows project the rest assuming ADP order.</p><p>That assumption breaks the moment someone reaches, so treat the projection as a sketch of which <b>tier</b> reaches your next pick, not which name. Reaches are marked in red.</p><p>Tap any logged pick to correct it.</p>",
  needs:"<p>Unfilled starting slots per team. Before your turn comes, scan the teams picking between now and then &mdash; their gaps are the positions about to disappear.</p>",
  depth:"<p>Players left who project above a replacement starter. The honest measure of whether you can wait: twenty quality players left means no urgency, however many just went.</p><p>Tap any bar to see exactly who.</p>",
+ share:"<p><b>Snapshot link</b> carries the entire board inside the URL. No server, no account, nothing stored anywhere &mdash; send a fresh link whenever you want them caught up. Opening one is read-only and cannot overwrite their own board.</p><p><b>Live sync</b> pushes after every pick to any URL that accepts a PUT and returns it on GET; the viewer polls every six seconds. A Firebase Realtime Database URL is the quickest option and SHARING.md walks through it.</p><p>Live sync depends on a service outside this app, which makes it the one part that can fail on draft day. Test it beforehand, and keep the snapshot link as your fallback &mdash; it has no moving parts.</p>",
  appearance:"<p><b>Themes</b> are sets of CSS variables. Dark and Slate are both low-light; Slate has wider gaps between page, card and header, so panels read as distinct layers rather than one flat sheet. Contrast uses the supplied palette with a proper elevation ramp added.</p><p><b>Custom</b> starts from whichever theme you pick, then every colour is a picker. Changes apply instantly and persist. Reset returns you to Dark.</p><p><b>Text size</b> scales the whole layout rather than just the glyphs, so buttons and rows stay proportionate. Browser zoom works too.</p>",
  cheat:"<p>Players grouped into tiers by projected points, with the cut placed at natural gaps rather than fixed intervals &mdash; the point of a tier is that everyone inside it is roughly interchangeable, so the boundary belongs where the drop-off actually is.</p><p>Drafted players are struck through. Your starred targets carry a star and an amber bar. A tier header turns amber when a third or less of it remains, which is your cue that waiting is about to cost you.</p><p><b>My Read</b> is built in: marking a player up or down shifts his value by 6% a step, which can lift him into the tier above or drop him below. The arrow beside his name shows it.</p>",
  runway:"<p>For each position: how many quality players are left, how fast the room is taking them, and &mdash; the part that matters &mdash; how many of <b>your remaining picks</b> land before that pool empties.</p><p>\"Gone before your next pick\" means if you want one, it is this turn. \"3 of your picks still land in it\" means you can comfortably wait.</p><p>Rate is measured over the last 24 picks, so it reacts to runs rather than averaging the whole draft.</p>",
@@ -1390,6 +1446,7 @@ function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').repl
 // ════════════════════════════════════════════════════════════
 var st=null;
 function save(){
+  if(VIEWER) return;
   try{
     localStorage.setItem(KEY,JSON.stringify({v:6,cfg:CFG,names:teamNames,
       log:draftLog.map(function(h){return [h.pickIndex,h.playerId,h.unlisted,h.teamIndex];}),
@@ -1590,24 +1647,15 @@ function drawRecs(){
     var d=document.createElement('div');
     d.className='rec'+(i===0?' top':'');
     d.style.borderLeftColor=COL[p.pos];
-    var why=[],c=counts(ME()),vr=vorOf(p);
-    var gp=(CFG.start[p.pos]||0)-(c[p.pos]||0);
-    if(gp>0) why.push(['key','Fills a starting '+p.pos+' slot']);
-    if(vr!==null&&vr>20) why.push(['','+'+Math.round(vr)+' over a replacement '+p.pos]);
-    if(p.role==='Alpha') why.push(['','Focal point of his offense']);
-    else if(p.role==='Committee'||p.role==='Rotational'||p.role==='Backup') why.push(['','Split role - '+p.role.toLowerCase()]);
-    if(p.upside) why.push(['warn',p.upside]);
-    var s=survival(p,a);
-    if(s!==null&&s<.3) why.push(['warn','Only '+Math.round(s*100)+'% he lasts to '+a]);
-    else if(s!==null&&s>.65) why.push(['',Math.round(s*100)+'% he is there at '+a]);
-    if(p.bump) why.push(['key','Your read: '+(p.bump>0?'above':'below')+' consensus']);
-    if(p.note) why.push(['warn',p.note]);
+    var s=survival(p,a),vr=vorOf(p);
     d.innerHTML='<span class="rrk">'+(i+1)+'</span><div class="rmain">'+
       '<div class="rnm">'+esc(p.name)+logBtn(p)+'</div>'+
       '<div class="rmeta">'+posBadge(p.pos)+' '+p.team+' &middot; bye '+p.bye+
       (p.adp===null?'':' &middot; rd '+rndOf(p.adp))+
-      (p.proj===null?'':' &middot; '+Math.round(p.proj)+'pt')+'</div>'+
-      '<div class="rwhy">'+why.slice(0,4).map(function(x){return '<div class="'+x[0]+'">'+x[1]+'</div>';}).join('')+'</div></div>'+
+      (p.proj===null?'':' &middot; '+(p.proj/GAMES).toFixed(1)+' ppg')+
+      (vr===null?'':' &middot; '+(vr>0?'+':'')+Math.round(vr)+' vor')+
+      (s===null?'':' &middot; <span style="color:'+(s<.3?'var(--urg)':s<.6?'var(--ac)':'var(--dim)')+'">'+
+        Math.round(s*100)+'% to '+a+'</span>')+'</div></div>'+
       '<div class="rside"><span class="score">'+Math.round(p._f)+'</span>'+
       '<button class="btn p s" data-d="'+p.id+'">Log</button>'+
       '<button class="star '+(p.target?'on':'')+'" data-s="'+p.id+'">'+(p.target?'\u2605':'\u2606')+'</button></div>';
@@ -1874,6 +1922,7 @@ function drawFlow(){
 
 function drawBoard(){
   var t=document.getElementById('bg'); t.innerHTML='';
+  var fitMode=t.className.indexOf('fit')>-1;
   var th=document.createElement('thead'),hr=document.createElement('tr');
   hr.innerHTML='<th style="min-width:30px;">R</th>';
   for(var i=0;i<CFG.teams;i++){
@@ -2198,7 +2247,7 @@ function drawLogTable(){
     tr.innerHTML='<td><button class="star '+(p.target?'on':'')+'" data-s="'+p.id+'">'+(p.target?'\u2605':'\u2606')+'</button></td>'+
       '<td class="pn">'+esc(p.name)+logBtn(p)+'</td><td>'+posBadge(p.pos)+'</td>'+
       '<td class="mono">'+p.team+'</td><td class="mono">'+p.bye+'</td><td>'+rndCell(p.adp)+'</td>'+
-      '<td class="mono">'+(p.proj===null||p.pos==='DST'?'&mdash;':Math.round(p.proj))+'</td>'+
+      '<td class="mono">'+(p.proj===null||p.pos==='DST'?'&mdash;':(p.proj/GAMES).toFixed(1))+'</td>'+
       '<td><button class="btn p s" data-d="'+p.id+'" '+dis+'>Log</button></td>';
     tb.appendChild(tr);
   });
@@ -2234,7 +2283,7 @@ function drawPickLog(){
 // interchangeable, so the boundary belongs wherever the drop-off actually is.
 // Your up/down rating shifts a player's value, so marking someone up can lift
 // him into the tier above; that is the intent, not a side effect.
-var csShowAll=false, csDepth=25, csExpanded={};
+var csShowAll=false, csDepth=10, csExpanded={};
 function adjVal(p){
   if(p.proj===null) return null;
   return p.proj*(1+0.06*(p.bump||0));
@@ -2460,6 +2509,118 @@ function deletePick(idx){
 }
 
 // ════════════════════════════════════════════════════════════
+// SHARING
+// ════════════════════════════════════════════════════════════
+// Two ways to let someone else follow the draft.
+//
+// A snapshot LINK carries the whole board in the URL, so it needs no server,
+// no account and no network beyond the page load itself. Send a fresh link
+// when you want them to see the latest. This path is fully self-contained.
+//
+// LIVE sync pushes the same payload to any endpoint that accepts a PUT and
+// returns it on GET (a Firebase Realtime Database URL is the easy option).
+// The viewer polls it. That path depends on a third-party service being up.
+//
+// Picks compress well: pickIndex is just position in the list and teamIndex is
+// derivable from the snake, so only the player id sequence has to travel.
+var VIEWER=false, SYNC={mode:'off',url:'',last:0,err:'',timer:null,pushing:false};
+
+function encodeState(){
+  var ids=draftLog.map(function(h){
+    if(h.playerId===null||h.playerId===undefined) return 'zz';
+    var s=h.playerId.toString(36);
+    return s.length<2?('0'+s):s;
+  }).join('');
+  var manual=draftLog.filter(function(h){return h.playerId===null||h.playerId===undefined;})
+    .map(function(h){return h.pickIndex+':'+h.unlisted.pos+':'+h.unlisted.name;}).join('~');
+  return [1,CFG.teams,CFG.rounds,CFG.slot,
+          teamNames.join('|'),ids,manual].join('^');
+}
+function decodeState(str){
+  try{
+    var a=str.split('^');
+    if(parseInt(a[0],10)!==1) return 'That link is from a different version.';
+    var teams=parseInt(a[1],10),rounds=parseInt(a[2],10),slot=parseInt(a[3],10);
+    if(!teams||!rounds||!slot) return 'That link is incomplete.';
+    CFG.teams=teams; CFG.rounds=rounds; CFG.slot=slot;
+    teamNames=(a[4]||'').split('|');
+    var man={};
+    (a[6]||'').split('~').forEach(function(s){
+      if(!s) return;
+      var i=s.indexOf(':'),j=s.indexOf(':',i+1);
+      man[parseInt(s.slice(0,i),10)]={pos:s.slice(i+1,j),name:s.slice(j+1)};
+    });
+    players.forEach(function(p){p.drafted=false;});
+    draftLog=[];
+    var ids=a[5]||'';
+    for(var k=0;k*2<ids.length;k++){
+      var tok=ids.substr(k*2,2);
+      if(tok==='zz'){
+        var m=man[k]||{pos:'RB',name:'Unknown'};
+        draftLog.push({pickIndex:k,playerId:null,unlisted:{name:m.name,pos:m.pos,team:'-'},teamIndex:teamAt(k)});
+      } else {
+        var id=parseInt(tok,36),pl=byId(id);
+        if(pl){pl.drafted=true;draftLog.push({pickIndex:k,playerId:id,unlisted:null,teamIndex:teamAt(k)});}
+      }
+    }
+    return null;
+  }catch(e){ return 'That link could not be read.'; }
+}
+function shareUrl(){
+  var base=location.href.split('#')[0];
+  return base+'#watch='+encodeURIComponent(encodeState());
+}
+function enterViewer(){
+  VIEWER=true;
+  var b=document.getElementById('viewerBar');
+  if(b) b.hidden=false;
+  document.body.setAttribute('data-viewer','1');
+}
+
+// ── live sync ──
+function syncPush(){
+  if(SYNC.mode!=='publish'||!SYNC.url||SYNC.pushing) return;
+  SYNC.pushing=true;
+  try{
+    fetch(SYNC.url,{method:'PUT',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({s:encodeState(),t:Date.now()})})
+      .then(function(r){ SYNC.pushing=false; SYNC.err=r.ok?'':'server said '+r.status;
+        SYNC.last=Date.now(); drawSync(); })
+      .catch(function(){ SYNC.pushing=false; SYNC.err='could not reach the sync URL'; drawSync(); });
+  }catch(e){ SYNC.pushing=false; SYNC.err='could not reach the sync URL'; drawSync(); }
+}
+function syncPull(){
+  if(SYNC.mode!=='watch'||!SYNC.url) return;
+  try{
+    fetch(SYNC.url,{cache:'no-store'})
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if(!d||!d.s){ SYNC.err='nothing published there yet'; drawSync(); return; }
+        if(d.t&&d.t===SYNC.last){ SYNC.err=''; drawSync(); return; }
+        SYNC.last=d.t||Date.now(); SYNC.err='';
+        var e=decodeState(d.s);
+        if(e) SYNC.err=e;
+        computeRepl(); computeStartQual(); computeRoom();
+        redrawNoSave();
+      })
+      .catch(function(){ SYNC.err='could not reach the sync URL'; drawSync(); });
+  }catch(e){ SYNC.err='could not reach the sync URL'; drawSync(); }
+}
+function syncStart(){
+  if(SYNC.timer) clearInterval(SYNC.timer);
+  if(SYNC.mode==='watch'&&SYNC.url){ syncPull(); SYNC.timer=setInterval(syncPull,6000); }
+  drawSync();
+}
+function drawSync(){
+  var e=document.getElementById('syncStatus'); if(!e) return;
+  var t=SYNC.last?new Date(SYNC.last).toLocaleTimeString():'never';
+  if(SYNC.mode==='off'){ e.innerHTML='<span style="color:var(--dimr)">Off. Nothing is being sent anywhere.</span>'; return; }
+  if(SYNC.err){ e.innerHTML='<span style="color:var(--urg)">'+esc(SYNC.err)+'</span> <span style="color:var(--dimr)">&middot; last good sync '+t+'</span>'; return; }
+  e.innerHTML='<span style="color:var(--ok)">'+(SYNC.mode==='publish'?'Publishing':'Watching')+'</span>'+
+    ' <span style="color:var(--dimr)">&middot; last sync '+t+'</span>';
+}
+
+// ════════════════════════════════════════════════════════════
 // EXPORT
 // ════════════════════════════════════════════════════════════
 function exportText(kind){
@@ -2553,7 +2714,7 @@ function draft(id){
   p.drafted=true;
   draftLog.push({pickIndex:cur(),playerId:id,unlisted:null,teamIndex:teamAt(cur())});
   document.getElementById('q').value=''; qsel=0;
-  save(); redraw(); drawQuick();
+  save(); redraw(); drawQuick(); syncPush();
 }
 function manual(name){
   var pos=prompt('Position for '+name+'?  QB / RB / WR / TE / DST / K','RB');
@@ -2579,6 +2740,7 @@ function undo(){
   if(l.playerId!==null&&l.playerId!==undefined){var p=byId(l.playerId); if(p)p.drafted=false;}
   save(); redraw(); drawQuick();
 }
+function redrawNoSave(){ redraw(); }
 function redraw(){
   initNames(); computeRepl(); computeStartQual(); computeRoom();
   if(viewTeam>=CFG.teams) viewTeam=ME();
@@ -2609,6 +2771,16 @@ Array.prototype.forEach.call(document.querySelectorAll('[data-p]'),function(b){
   });
 });
 document.getElementById('search').addEventListener('input',function(e){search=e.target.value;drawPlayers();});
+document.getElementById('bgFit').addEventListener('click',function(){
+  this.className='on'; document.getElementById('bgWide').className='';
+  document.getElementById('bg').className='bg fit';
+  document.getElementById('bsc').className='bsc fit';
+});
+document.getElementById('bgWide').addEventListener('click',function(){
+  this.className='on'; document.getElementById('bgFit').className='';
+  document.getElementById('bg').className='bg';
+  document.getElementById('bsc').className='bsc';
+});
 document.getElementById('bq').addEventListener('input',function(e){bSearch=e.target.value;drawLogTable();});
 Array.prototype.forEach.call(document.querySelectorAll('[data-bp]'),function(b){
   b.addEventListener('click',function(){
@@ -2676,10 +2848,10 @@ document.getElementById('btnReset').addEventListener('click',function(){
 });
 document.getElementById('tsel').addEventListener('change',function(e){viewTeam=parseInt(e.target.value,10);drawRoster();});
 var THEMEMETA=[
-  ['dark','Dark',['#101010','#1e1e1e','#e0a832','#eaeaea']],
+  ['dark','Dark',['#0c0c0c','#242424','#e0a832','#f0f0f0']],
   ['slate','Slate',['#0a0a0c','#22222a','#ffb638','#f6f6f9']],
-  ['light','Light',['#f4f3ef','#eceae4','#9a6b12','#1b1b19']],
-  ['contrast','Contrast',['#0a0a0a','#282828','#BB313E','#F0F0E6']],
+  ['ember','Ember',['#0d0a08','#28211c','#ff9d3d','#f7f1ea']],
+  ['paper','Paper',['#e8e6e0','#f4f2ec','#a35c07','#17171a']],
   ['custom','Custom',['#333','#555','#888','#ccc']]
 ];
 function drawThemes(){
@@ -2758,6 +2930,41 @@ document.getElementById('cfgRounds').addEventListener('change',function(e){resha
 });
 document.getElementById('stFLEX').addEventListener('change',function(e){
   var v=parseInt(e.target.value,10); if(isNaN(v)||v<0)return; CFG.flex=v; save(); redraw();});
+document.getElementById('shCopy').addEventListener('click',function(){
+  var u=shareUrl(),t=document.getElementById('shOut'),m=document.getElementById('shMsg');
+  t.value=u; t.select();
+  var ok=false;
+  try{ok=document.execCommand('copy');}catch(e){}
+  if(!ok&&navigator&&navigator.clipboard){try{navigator.clipboard.writeText(u);ok=true;}catch(e){}}
+  m.textContent=ok?('Copied \u2014 '+draftLog.length+' picks, '+u.length+' characters'):'Select the text below and copy it';
+  setTimeout(function(){m.textContent='';},4000);
+});
+Array.prototype.forEach.call(document.querySelectorAll('[data-sm]'),function(b){
+  b.addEventListener('click',function(){
+    Array.prototype.forEach.call(document.querySelectorAll('[data-sm]'),function(x){x.className='';});
+    b.className='on';
+    SYNC.mode=b.getAttribute('data-sm');
+    SYNC.url=document.getElementById('syncUrl').value.trim();
+    SYNC.err='';
+    try{localStorage.setItem('ffsync',JSON.stringify({mode:SYNC.mode,url:SYNC.url}));}catch(e){}
+    syncStart();
+  });
+});
+document.getElementById('syncUrl').addEventListener('change',function(e){
+  SYNC.url=e.target.value.trim(); SYNC.err='';
+  try{localStorage.setItem('ffsync',JSON.stringify({mode:SYNC.mode,url:SYNC.url}));}catch(e){}
+  syncStart();
+});
+document.getElementById('syncTest').addEventListener('click',function(){
+  SYNC.url=document.getElementById('syncUrl').value.trim(); SYNC.err='';
+  if(!SYNC.url){document.getElementById('syncStatus').innerHTML='<span style="color:var(--urg)">Enter a sync URL first.</span>';return;}
+  if(SYNC.mode==='publish') syncPush(); else if(SYNC.mode==='watch') syncPull();
+  else document.getElementById('syncStatus').innerHTML='<span style="color:var(--dimr)">Pick Publish or Watch first.</span>';
+});
+document.getElementById('leaveViewer').addEventListener('click',function(e){
+  e.preventDefault();
+  location.href=location.href.split('#')[0];
+});
 document.getElementById('expMine').addEventListener('click',function(){exportText('mine');});
 document.getElementById('expAll').addEventListener('click',function(){exportText('all');});
 document.getElementById('expCsv').addEventListener('click',function(){exportText('csv');});
@@ -2811,7 +3018,25 @@ try{
   applyScale(parseFloat(localStorage.getItem('ffscale'))||1);
   applyTheme(localStorage.getItem('fftheme')||'dark');
 }catch(e){ applyTheme('dark'); }
-load(); initNames(); viewTeam=ME(); computeRepl(); computeStartQual(); computeRoom(); redraw(); drawSwatches();
+var hash=(location.hash||'');
+if(hash.indexOf('#watch=')===0){
+  // Viewer: build state purely from the link, never touch stored data.
+  enterViewer();
+  var derr=decodeState(decodeURIComponent(hash.slice(7)));
+  initNames(); viewTeam=ME(); computeRepl(); computeStartQual(); computeRoom(); redraw(); drawSwatches();
+  if(derr){ var vb=document.getElementById('viewerBar'); if(vb) vb.textContent=derr; }
+} else {
+  load(); initNames(); viewTeam=ME(); computeRepl(); computeStartQual(); computeRoom(); redraw(); drawSwatches();
+  try{
+    var ss=localStorage.getItem('ffsync');
+    if(ss){ var sd=JSON.parse(ss); SYNC.mode=sd.mode||'off'; SYNC.url=sd.url||'';
+      var ui=document.getElementById('syncUrl'); if(ui) ui.value=SYNC.url;
+      Array.prototype.forEach.call(document.querySelectorAll('[data-sm]'),function(b){
+        b.className=b.getAttribute('data-sm')===SYNC.mode?'on':'';});
+      syncStart();
+    } else drawSync();
+  }catch(e){}
+}
 
 // Offline support. Registration is wrapped because service workers need a
 // secure origin - opening index.html straight off disk will skip this quietly
