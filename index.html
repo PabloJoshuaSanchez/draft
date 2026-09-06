@@ -433,19 +433,25 @@
   .tchip.me{border-color:var(--ac);color:var(--ac);}
   .tchip.me.on{color:var(--acfg);}
   .tchip .tn2{font-size:9px;opacity:.7;margin-left:4px;font-family:var(--fm);}
-  #wrosters{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:11px;align-items:start;}
-  #wrosters.single{grid-template-columns:minmax(0,460px);}
+  #wrosters{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:9px;align-items:start;}
+  #wrosters.single{grid-template-columns:minmax(0,420px);}
   .wrcard{margin-bottom:0;}
+  .wrcard .ch{padding:7px 11px;}
+  .wrcard .ch h3{font-size:10px;}
   .wrcard.mine{border-color:var(--ac);}
-  .wrbody{padding:4px 0;}
-  .wrr{display:grid;grid-template-columns:38px 1fr;gap:3px 8px;padding:5px 12px;
-    border-bottom:1px solid rgba(255,255,255,.04);align-items:baseline;}
-  .wrr:last-child{border-bottom:none;}
-  .wrr.empty{opacity:.35;}
-  .wrs{font-size:8.5px;letter-spacing:.8px;text-transform:uppercase;color:var(--dimr);font-weight:700;}
-  .wrp{font-size:12.5px;font-weight:700;padding-left:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-  .wrp.empty{font-weight:400;color:var(--dimr);padding-left:0;}
-  .wrm{grid-column:2;font-size:9.5px;color:var(--dimr);font-family:var(--fm);padding-left:6px;}
+  .wrbody{padding:2px 0;}
+  /* One line per slot. The two-line version meant a 16-man roster ran past the
+     bottom of the screen, which defeats the point of a roster view. */
+  .wrr{display:flex;align-items:center;gap:6px;padding:3px 11px;font-size:12px;
+    border-left:3px solid transparent;}
+  .wrr.empty{opacity:.4;}
+  .wrr.benchtop{border-top:1px solid var(--ln);margin-top:3px;padding-top:6px;}
+  .wrs{width:30px;flex-shrink:0;font-size:8px;letter-spacing:.7px;text-transform:uppercase;
+    color:var(--dimr);font-weight:700;}
+  .wrp{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:700;}
+  .wrr.empty .wrp{font-weight:400;font-style:italic;color:var(--dimr);}
+  .wrm{flex-shrink:0;font-size:9px;color:var(--dimr);font-family:var(--fm);}
+  .wrpos{flex-shrink:0;font-size:8.5px;font-weight:800;width:20px;text-align:right;}
   .setg{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:10px;margin-bottom:13px;}
   .sf{background:var(--s1);border:1px solid var(--ln);border-radius:7px;padding:11px 12px;}
   .sfl{font-size:8.5px;text-transform:uppercase;letter-spacing:1px;color:var(--dimr);margin-bottom:6px;}
@@ -2596,13 +2602,18 @@ function rosterCard(ti){
     if(s!=='BN') return;
     for(var j=0;j<picks.length;j++) if(!used[j]){fill[ix]=picks[j];used[j]=1;break;}
   });
+  var starters=slots.length-benchN();
   var rows=slots.map(function(s,ix){
     var pl=fill[ix];
-    return '<div class="wrr'+(pl?'':' empty')+'">'+
+    var cls='wrr'+(pl?'':' empty')+(ix===starters?' benchtop':'');
+    // The slot label already implies the position for fixed slots; only show a
+    // position tag where it could be anything (flex and bench).
+    var showPos=(s==='FLEX'||s==='BN')&&pl;
+    return '<div class="'+cls+'"'+(pl?' style="border-left-color:'+(COL[pl.pos]||'transparent')+'"':'')+'>'+
       '<span class="wrs">'+s+'</span>'+
-      (pl?'<span class="wrp" style="border-left:3px solid '+(COL[pl.pos]||'var(--ln)')+'">'+esc(pl.name)+'</span>'+
-          '<span class="wrm">'+pl.pos+' &middot; '+pl.team+' &middot; bye '+pl.bye+'</span>'
-         :'<span class="wrp empty">&mdash;</span><span class="wrm"></span>')+
+      (showPos?'<span class="wrpos" style="color:'+COL[pl.pos]+'">'+pl.pos+'</span>':'<span class="wrpos"></span>')+
+      '<span class="wrp">'+(pl?esc(pl.name):'&mdash;')+'</span>'+
+      (pl?'<span class="wrm">'+pl.team+' &middot; '+pl.bye+'</span>':'')+
       '</div>';
   }).join('');
   var d=document.createElement('div');
