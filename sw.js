@@ -8,7 +8,7 @@
  *
  * Bump CACHE when you upload a new index.html, so old files get cleaned out.
  */
-var CACHE = 'warroom-v11';
+var CACHE = 'warroom-v12';
 var ASSETS = [
   './',
   './index.html',
