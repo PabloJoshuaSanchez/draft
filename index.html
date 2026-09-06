@@ -425,7 +425,16 @@
     border-radius:4px;background:transparent;cursor:pointer;flex-shrink:0;}
   .swl{font-size:10.5px;color:var(--dim);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .swv{font-family:var(--fm);font-size:9px;color:var(--dimr);}
+  .teamchips{display:flex;gap:5px;flex-wrap:wrap;}
+  .tchip{background:var(--s2);border:1px solid var(--ln);color:var(--dim);font-family:var(--fb);
+    font-size:11px;font-weight:700;padding:7px 11px;border-radius:5px;cursor:pointer;min-height:32px;}
+  .tchip:hover{color:var(--tx);}
+  .tchip.on{background:var(--ac);color:var(--acfg);border-color:var(--ac);}
+  .tchip.me{border-color:var(--ac);color:var(--ac);}
+  .tchip.me.on{color:var(--acfg);}
+  .tchip .tn2{font-size:9px;opacity:.7;margin-left:4px;font-family:var(--fm);}
   #wrosters{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:11px;align-items:start;}
+  #wrosters.single{grid-template-columns:minmax(0,460px);}
   .wrcard{margin-bottom:0;}
   .wrcard.mine{border-color:var(--ac);}
   .wrbody{padding:4px 0;}
@@ -752,13 +761,18 @@
       <input class="qin" id="wsearch" type="text" placeholder="Search..." style="flex:1;min-width:120px;font-size:14px;min-height:34px;padding:7px 10px;">
     </div>
     <div class="tsc" style="max-height:70vh;"><table>
-      <thead><tr><th>Player</th><th>Pos</th><th>Tm</th><th>Bye</th><th>Rd</th><th>PPG</th><th>VOR</th><th>OL</th></tr></thead>
+      <thead id="wpth"></thead>
       <tbody id="wptb"></tbody>
     </table></div>
   </div>
 </div>
 
 <div class="panel" id="p-wrosters" hidden>
+  <div class="card">
+    <div class="cb" style="padding:9px 12px;">
+      <div class="teamchips" id="wTeamChips"></div>
+    </div>
+  </div>
   <div id="wrosters"></div>
 </div>
 
@@ -2493,14 +2507,38 @@ function drawCheat(){
   });
 }
 // ── watch-only views ──
-var wFilter='ALL', wSearch='';
+var wFilter='ALL', wSearch='', wTeam=0, wSort='rd', wDir=1;
+function initWTeam(){ wTeam=ME(); }
+// Same click-to-sort behaviour as the drafting table, minus anything that edits.
+var WCOLS=[
+  {id:'name',t:'Player',v:function(p){return p.name;}},
+  {id:'pos', t:'Pos',   v:function(p){return POSN.indexOf(p.pos);}},
+  {id:'team',t:'Tm',    v:function(p){return p.team;}},
+  {id:'bye', t:'Bye',   v:function(p){return p.bye;}},
+  {id:'rd',  t:'Rd',    v:function(p){return p.adp===null?9999:p.adp;}},
+  {id:'ppg', t:'PPG',   v:function(p){return p.proj===null?-1:p.proj;},desc:1},
+  {id:'vor', t:'VOR',   v:function(p){var x=vorOf(p);return x===null?-9999:x;},desc:1},
+  {id:'ol',  t:'OL',    v:function(p){return OLRANK[p.team]||99;}}
+];
 function drawWPlayers(){
-  var tb=document.getElementById('wptb'); if(!tb) return;
-  tb.innerHTML='';
+  var tb=document.getElementById('wptb'),th=document.getElementById('wpth');
+  if(!tb||!th) return;
   var l=players.filter(function(p){return !p.drafted;});
   if(wFilter!=='ALL') l=l.filter(function(p){return p.pos===wFilter;});
   if(wSearch.trim()) l=l.filter(function(p){return p.name.toLowerCase().indexOf(wSearch.toLowerCase())>-1;});
-  l.sort(function(a,b){return (a.adp===null?9999:a.adp)-(b.adp===null?9999:b.adp);});
+  var cd=null,i;
+  for(i=0;i<WCOLS.length;i++) if(WCOLS[i].id===wSort) cd=WCOLS[i];
+  if(cd) l.sort(function(x,y){
+    var xv=cd.v(x),yv=cd.v(y);
+    if(typeof xv==='string') return xv.localeCompare(yv)*wDir;
+    return (xv-yv)*wDir;
+  });
+  th.innerHTML='<tr>'+WCOLS.map(function(col){
+    var act=wSort===col.id;
+    return '<th class="sortable'+(act?' act':'')+'" data-wsc="'+col.id+'">'+col.t+
+      (act?'<span class="sar">'+(wDir<0?'\u25b4':'\u25be')+'</span>':'')+'</th>';
+  }).join('')+'</tr>';
+  tb.innerHTML='';
   if(!l.length){tb.innerHTML='<tr><td colspan="8" class="empty">Nobody matches.</td></tr>';return;}
   l.slice(0,150).forEach(function(p){
     var vr=vorOf(p),tr=document.createElement('tr');
@@ -2513,45 +2551,73 @@ function drawWPlayers(){
     tb.appendChild(tr);
   });
   wire(tb);
+  Array.prototype.forEach.call(th.querySelectorAll('[data-wsc]'),function(h){
+    h.addEventListener('click',function(){
+      var id=h.getAttribute('data-wsc'),c2=null,k;
+      for(k=0;k<WCOLS.length;k++) if(WCOLS[k].id===id) c2=WCOLS[k];
+      if(wSort===id) wDir=-wDir;
+      else { wSort=id; wDir=(c2&&c2.desc)?-1:1; }
+      drawWPlayers();
+    });
+  });
+}
+function drawWTeamChips(){
+  var h=document.getElementById('wTeamChips'); if(!h) return;
+  h.innerHTML='';
+  var mk=function(label,val,extra){
+    var b=document.createElement('button');
+    b.className='tchip'+(wTeam===val?' on':'')+(extra||'');
+    b.innerHTML=label;
+    b.addEventListener('click',function(){ wTeam=val; drawWTeamChips(); drawWRosters(); });
+    h.appendChild(b);
+  };
+  mk('All teams','all');
+  for(var t=0;t<CFG.teams;t++){
+    (function(ti){
+      mk(esc(teamNames[ti])+'<span class="tn2">'+picksOf(ti).length+'</span>',ti,ti===ME()?' me':'');
+    })(t);
+  }
+}
+function rosterCard(ti){
+  var picks=picksOf(ti),slots=[],i;
+  POSN.forEach(function(p){for(i=0;i<(CFG.start[p]||0);i++) slots.push(p);});
+  for(i=0;i<CFG.flex;i++) slots.push('FLEX');
+  for(i=0;i<benchN();i++) slots.push('BN');
+  var fill=slots.map(function(){return null;}),used={};
+  slots.forEach(function(s,ix){
+    if(s==='FLEX'||s==='BN') return;
+    for(var j=0;j<picks.length;j++) if(picks[j].pos===s&&!used[j]){fill[ix]=picks[j];used[j]=1;break;}
+  });
+  slots.forEach(function(s,ix){
+    if(s!=='FLEX') return;
+    for(var j=0;j<picks.length;j++) if(FLEXOK.indexOf(picks[j].pos)>-1&&!used[j]){fill[ix]=picks[j];used[j]=1;break;}
+  });
+  slots.forEach(function(s,ix){
+    if(s!=='BN') return;
+    for(var j=0;j<picks.length;j++) if(!used[j]){fill[ix]=picks[j];used[j]=1;break;}
+  });
+  var rows=slots.map(function(s,ix){
+    var pl=fill[ix];
+    return '<div class="wrr'+(pl?'':' empty')+'">'+
+      '<span class="wrs">'+s+'</span>'+
+      (pl?'<span class="wrp" style="border-left:3px solid '+(COL[pl.pos]||'var(--ln)')+'">'+esc(pl.name)+'</span>'+
+          '<span class="wrm">'+pl.pos+' &middot; '+pl.team+' &middot; bye '+pl.bye+'</span>'
+         :'<span class="wrp empty">&mdash;</span><span class="wrm"></span>')+
+      '</div>';
+  }).join('');
+  var d=document.createElement('div');
+  d.className='card wrcard'+(ti===ME()?' mine':'');
+  d.innerHTML='<div class="ch"><h3'+(ti===ME()?' style="color:var(--ac)"':'')+'>'+esc(teamNames[ti])+'</h3>'+
+    '<span class="cx">'+picks.length+'/'+CFG.rounds+'</span></div><div class="wrbody">'+rows+'</div>';
+  return d;
 }
 function drawWRosters(){
   var host=document.getElementById('wrosters'); if(!host) return;
   host.innerHTML='';
-  for(var t=0;t<CFG.teams;t++){
-    (function(ti){
-      var picks=picksOf(ti),slots=[],i;
-      POSN.forEach(function(p){for(i=0;i<(CFG.start[p]||0);i++) slots.push(p);});
-      for(i=0;i<CFG.flex;i++) slots.push('FLEX');
-      for(i=0;i<benchN();i++) slots.push('BN');
-      var fill=slots.map(function(){return null;}),used={};
-      slots.forEach(function(s,ix){
-        if(s==='FLEX'||s==='BN') return;
-        for(var j=0;j<picks.length;j++) if(picks[j].pos===s&&!used[j]){fill[ix]=picks[j];used[j]=1;break;}
-      });
-      slots.forEach(function(s,ix){
-        if(s!=='FLEX') return;
-        for(var j=0;j<picks.length;j++) if(FLEXOK.indexOf(picks[j].pos)>-1&&!used[j]){fill[ix]=picks[j];used[j]=1;break;}
-      });
-      slots.forEach(function(s,ix){
-        if(s!=='BN') return;
-        for(var j=0;j<picks.length;j++) if(!used[j]){fill[ix]=picks[j];used[j]=1;break;}
-      });
-      var rows=slots.map(function(s,ix){
-        var pl=fill[ix];
-        return '<div class="wrr'+(pl?'':' empty')+'">'+
-          '<span class="wrs">'+s+'</span>'+
-          (pl?'<span class="wrp" style="border-left:3px solid '+(COL[pl.pos]||'var(--ln)')+'">'+
-              esc(pl.name)+'</span><span class="wrm">'+pl.pos+' &middot; '+pl.team+' &middot; bye '+pl.bye+'</span>'
-             :'<span class="wrp empty">&mdash;</span><span class="wrm"></span>')+
-          '</div>';
-      }).join('');
-      var d=document.createElement('div');
-      d.className='card wrcard'+(ti===ME()?' mine':'');
-      d.innerHTML='<div class="ch"><h3'+(ti===ME()?' style="color:var(--ac)"':'')+'>'+esc(teamNames[ti])+'</h3>'+
-        '<span class="cx">'+picks.length+'/'+CFG.rounds+'</span></div><div class="wrbody">'+rows+'</div>';
-      host.appendChild(d);
-    })(t);
-  }
+  if(wTeam>=CFG.teams) wTeam='all';
+  host.className = wTeam==='all' ? '' : 'single';
+  if(wTeam==='all'){ for(var t=0;t<CFG.teams;t++) host.appendChild(rosterCard(t)); }
+  else host.appendChild(rosterCard(wTeam));
 }
 function drawQuick(){
   var box=document.getElementById('qres'),v=document.getElementById('q').value.trim();
@@ -2751,6 +2817,7 @@ function readOnly(){ return VIEWER||SYNC.mode==='watch'; }
 function enterViewer(){ VIEWER=true; applyMode(); }
 function applyMode(){
   var ro=readOnly(),b=document.getElementById('viewerBar');
+  if(wTeam!=='all'&&wTeam>=CFG.teams) wTeam=ME();
   if(document.body){
     document.body.setAttribute('data-ro',ro?'1':'0');
     document.body.setAttribute('data-live',LIVELINK?'1':'0');
@@ -2788,7 +2855,10 @@ function drawWStatus(){
 }
 function showTab(name){
   Array.prototype.forEach.call(document.querySelectorAll('.tab'),function(x){
-    x.className='tab'+(x.getAttribute('data-t')===name?' on':'');
+    // Toggle only the 'on' class. Rebuilding className wiped the 'wtab' marker
+    // that decides which tabs belong to watch mode, so the whole bar vanished.
+    if(x.getAttribute('data-t')===name) x.classList.add('on');
+    else x.classList.remove('on');
   });
   Array.prototype.forEach.call(document.querySelectorAll('.panel'),function(p){p.hidden=true;});
   var el=document.getElementById('p-'+name); if(el) el.hidden=false;
@@ -2972,7 +3042,7 @@ function redraw(){
   drawThemes();
   if(readOnly()){
     drawBoard('wbg'); drawFlow('wflowBody'); drawPickLog('wpickLog','wplCount');
-    drawWPlayers(); drawWRosters(); drawWStatus();
+    drawWPlayers(); drawWTeamChips(); drawWRosters(); drawWStatus();
   }
   drawNeeds(); drawDepth(); drawRunway(); drawByTeam(); drawValues(); drawRoster();
   drawBoard(); drawSetup();
@@ -3298,7 +3368,7 @@ if(hash.indexOf('#live=')===0){
   Array.prototype.forEach.call(document.querySelectorAll('[data-sm]'),function(b){
     b.className=b.getAttribute('data-sm')==='watch'?'on':'';});
   initNames(); viewTeam=ME(); computeRepl(); computeStartQual(); computeRoom();
-  applyMode(); redraw(); drawSwatches(); syncStart();
+  initWTeam(); applyMode(); redraw(); drawSwatches(); syncStart();
 } else if(hash.indexOf('#watch=')===0){
   // Viewer: build state purely from the link, never touch stored data.
   enterViewer();
