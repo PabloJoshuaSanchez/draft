@@ -425,6 +425,18 @@
     border-radius:4px;background:transparent;cursor:pointer;flex-shrink:0;}
   .swl{font-size:10.5px;color:var(--dim);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .swv{font-family:var(--fm);font-size:9px;color:var(--dimr);}
+  #wrosters{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:11px;align-items:start;}
+  .wrcard{margin-bottom:0;}
+  .wrcard.mine{border-color:var(--ac);}
+  .wrbody{padding:4px 0;}
+  .wrr{display:grid;grid-template-columns:38px 1fr;gap:3px 8px;padding:5px 12px;
+    border-bottom:1px solid rgba(255,255,255,.04);align-items:baseline;}
+  .wrr:last-child{border-bottom:none;}
+  .wrr.empty{opacity:.35;}
+  .wrs{font-size:8.5px;letter-spacing:.8px;text-transform:uppercase;color:var(--dimr);font-weight:700;}
+  .wrp{font-size:12.5px;font-weight:700;padding-left:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .wrp.empty{font-weight:400;color:var(--dimr);padding-left:0;}
+  .wrm{grid-column:2;font-size:9.5px;color:var(--dimr);font-family:var(--fm);padding-left:6px;}
   .setg{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:10px;margin-bottom:13px;}
   .sf{background:var(--s1);border:1px solid var(--ln);border-radius:7px;padding:11px 12px;}
   .sfl{font-size:8.5px;text-transform:uppercase;letter-spacing:1px;color:var(--dimr);margin-bottom:6px;}
@@ -459,10 +471,12 @@
   [data-ro="1"] .qbox,[data-ro="1"] #bq,[data-ro="1"] .roEdit{display:none!important;}
   [data-ro="1"] .bcell{cursor:default;}
   [data-ro="1"] .rside{gap:0;}
-  /* Simple layout trims the tab bar to what a watcher actually needs. */
-  [data-simple="1"] .tab[data-t="players"],
-  [data-simple="1"] .tab[data-t="targets"],
-  [data-simple="1"] .tab[data-t="insights"]{display:none;}
+  /* Watching gets its own tab set rather than a trimmed version of the full
+     app: a watcher wants the board, the order of picks, who is left and what
+     everyone has - not the working surfaces for whoever is actually drafting. */
+  .tab.wtab{display:none;}
+  [data-ro="1"] .tab:not(.wtab){display:none;}
+  [data-ro="1"] .tab.wtab{display:block;}
   .robar{background:var(--ac);color:var(--acfg);padding:7px 13px;font-size:12px;
     font-weight:700;text-align:center;display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;}
   /* display:flex above outranks the browser's [hidden]{display:none}, so the
@@ -518,6 +532,11 @@
     <div class="tab" data-t="targets">Targets <span class="bdg" id="bTgt">0</span></div>
     <div class="tab" data-t="insights">Insights</div>
     <div class="tab" data-t="setup">Setup</div>
+    <div class="tab wtab" data-t="wboard">Board</div>
+    <div class="tab wtab" data-t="wflow">Flow</div>
+    <div class="tab wtab" data-t="wplayers">Players left</div>
+    <div class="tab wtab" data-t="wrosters">Rosters</div>
+    <div class="tab wtab" data-t="display">Display</div>
   </div>
 </div></div>
 
@@ -697,6 +716,78 @@
   <div class="cheatcols" id="cheatCols"></div>
 </div>
 
+<!-- ══ WATCH-ONLY PANELS ══ -->
+<div class="panel" id="p-wboard" hidden>
+  <div class="card">
+    <div class="ch"><h3>Draft board</h3>
+      <span class="seg" style="margin-left:auto;">
+        <button id="wbgFit" class="on">Fit width</button>
+        <button id="wbgWide">Wide</button>
+      </span>
+    </div>
+    <div class="bsc fit" id="wbsc"><table class="bg fit" id="wbg"></table></div>
+  </div>
+  <div class="card">
+    <div class="ch"><h3>Latest picks</h3><span class="cx" id="wplCount"></span></div>
+    <div class="tsc" style="max-height:44vh;" id="wpickLog"></div>
+  </div>
+</div>
+
+<div class="panel" id="p-wflow" hidden>
+  <div class="card">
+    <div class="ch"><h3>Flow</h3><span class="cx">picks 1 &rarr; last, top to bottom</span></div>
+    <div class="tsc" id="wflowBody" style="max-height:76vh;"></div>
+  </div>
+</div>
+
+<div class="panel" id="p-wplayers" hidden>
+  <div class="card">
+    <div class="cb" style="padding:10px 12px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+      <button class="btn s" data-wp="ALL" id="wfALL">All</button>
+      <button class="btn s g" data-wp="QB">QB</button>
+      <button class="btn s g" data-wp="RB">RB</button>
+      <button class="btn s g" data-wp="WR">WR</button>
+      <button class="btn s g" data-wp="TE">TE</button>
+      <button class="btn s g" data-wp="DST">DST</button>
+      <input class="qin" id="wsearch" type="text" placeholder="Search..." style="flex:1;min-width:120px;font-size:14px;min-height:34px;padding:7px 10px;">
+    </div>
+    <div class="tsc" style="max-height:70vh;"><table>
+      <thead><tr><th>Player</th><th>Pos</th><th>Tm</th><th>Bye</th><th>Rd</th><th>PPG</th><th>VOR</th><th>OL</th></tr></thead>
+      <tbody id="wptb"></tbody>
+    </table></div>
+  </div>
+</div>
+
+<div class="panel" id="p-wrosters" hidden>
+  <div id="wrosters"></div>
+</div>
+
+<div class="panel" id="p-display" hidden>
+  <div class="card"><div class="ch"><h3>Display</h3></div>
+    <div class="cb">
+      <div class="sfl">Theme</div>
+      <div class="thgrid" id="thGridW"></div>
+      <div class="sfl" style="margin-top:16px;">Text size</div>
+      <span class="seg">
+        <button data-sz="0.92">S</button>
+        <button data-sz="1" class="on">M</button>
+        <button data-sz="1.12">L</button>
+        <button data-sz="1.28">XL</button>
+      </span>
+    </div>
+  </div>
+  <div class="card" id="stopCard"><div class="ch"><h3>Watching</h3></div>
+    <div class="cb">
+      <div id="wSyncStatus" style="font-size:11.5px;margin-bottom:10px;"></div>
+      <button class="btn s" id="wStop">Stop watching and go back to my own board</button>
+      <div style="font-size:10.5px;color:var(--dimr);margin-top:8px;line-height:1.55;">
+        Publishing lives in the full app. Stop watching first &mdash; that way you can't
+        start broadcasting over someone else's draft by mistake.
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ══ SETUP ══ -->
 <div class="panel" id="p-setup" hidden>
   <div class="card roEdit"><div class="ch"><h3>League</h3><button class="info" data-info="league">i</button></div>
@@ -786,22 +877,6 @@
       </div>
       <input class="sfi" id="syncUrl" type="text" placeholder="https://your-db.firebaseio.com/draft/room1.json" style="font-family:var(--fm);font-size:12px;">
       <div id="syncStatus" style="font-size:11px;margin-top:7px;"></div>
-      <div style="margin-top:13px;">
-        <div class="sfl">While watching, show</div>
-        <span class="seg">
-          <button id="vwSimple" class="on">Just the essentials</button>
-          <button id="vwFull">Every tab</button>
-        </span>
-        <div style="font-size:10.5px;color:var(--dimr);margin-top:6px;line-height:1.55;">
-          Essentials keeps Board, On the clock, Cheat sheet and Setup. Every tab adds
-          Players, Targets and Insights.
-        </div>
-      </div>
-      <div style="font-size:10.5px;color:var(--dimr);margin-top:7px;line-height:1.55;">
-        Publish sends the board after every pick. Watch polls the same URL every six seconds.
-        See SHARING.md for a five-minute Firebase setup. <b style="color:var(--ac)">Test this before the draft</b> &mdash;
-        it depends on a service outside this app, so it is the one part that can fail on the day.
-      </div>
     </div>
   </div>
   <div class="card"><div class="ch"><h3>Export</h3><button class="info" data-info="export">i</button></div>
@@ -1903,8 +1978,8 @@ function drawTargets(){
   });
 }
 
-function drawFlow(){
-  var host=document.getElementById('flowBody'); host.innerHTML='';
+function drawFlow(hid){
+  var host=document.getElementById(hid||'flowBody'); if(!host) return; host.innerHTML='';
   var q=adpQueue(),qi=0,c0=cur();
   for(var r=0;r<CFG.rounds;r++){
     var first=r*CFG.teams+1,last=(r+1)*CFG.teams,mineIn=[];
@@ -1951,8 +2026,8 @@ function drawFlow(){
   wire(host);
 }
 
-function drawBoard(){
-  var t=document.getElementById('bg'); t.innerHTML='';
+function drawBoard(tid){
+  var t=document.getElementById(tid||'bg'); if(!t) return; t.innerHTML='';
   var fitMode=t.className.indexOf('fit')>-1;
   var th=document.createElement('thead'),hr=document.createElement('tr');
   hr.innerHTML='<th style="min-width:30px;">R</th>';
@@ -2284,9 +2359,9 @@ function drawLogTable(){
   });
   wire(tb);
 }
-function drawPickLog(){
-  var e=document.getElementById('pickLog'); e.innerHTML='';
-  document.getElementById('plCount').textContent=draftLog.length+' logged';
+function drawPickLog(eid,cid){
+  var e=document.getElementById(eid||'pickLog'); if(!e) return; e.innerHTML='';
+  var cnt=document.getElementById(cid||'plCount'); if(cnt) cnt.textContent=draftLog.length+' logged';
   if(!draftLog.length){e.innerHTML='<div class="empty">Nothing logged yet. Search on the left and press Log.</div>';return;}
   draftLog.slice().reverse().forEach(function(h){
     var nm,pos,tm;
@@ -2416,6 +2491,67 @@ function drawCheat(){
       drawCheat();
     });
   });
+}
+// ── watch-only views ──
+var wFilter='ALL', wSearch='';
+function drawWPlayers(){
+  var tb=document.getElementById('wptb'); if(!tb) return;
+  tb.innerHTML='';
+  var l=players.filter(function(p){return !p.drafted;});
+  if(wFilter!=='ALL') l=l.filter(function(p){return p.pos===wFilter;});
+  if(wSearch.trim()) l=l.filter(function(p){return p.name.toLowerCase().indexOf(wSearch.toLowerCase())>-1;});
+  l.sort(function(a,b){return (a.adp===null?9999:a.adp)-(b.adp===null?9999:b.adp);});
+  if(!l.length){tb.innerHTML='<tr><td colspan="8" class="empty">Nobody matches.</td></tr>';return;}
+  l.slice(0,150).forEach(function(p){
+    var vr=vorOf(p),tr=document.createElement('tr');
+    tr.style.borderLeft='3px solid '+COL[p.pos];
+    tr.innerHTML='<td class="pn">'+esc(p.name)+logBtn(p)+'</td><td>'+posBadge(p.pos)+'</td>'+
+      '<td class="mono">'+p.team+'</td><td class="mono">'+p.bye+'</td><td>'+rndCell(p.adp)+'</td>'+
+      '<td class="mono">'+(p.proj===null||p.pos==='DST'?'&mdash;':(p.proj/GAMES).toFixed(1))+'</td>'+
+      '<td class="mono">'+(vr===null||p.pos==='DST'?'&mdash;':(vr>0?'+':'')+Math.round(vr))+'</td>'+
+      '<td>'+olCell(p)+'</td>';
+    tb.appendChild(tr);
+  });
+  wire(tb);
+}
+function drawWRosters(){
+  var host=document.getElementById('wrosters'); if(!host) return;
+  host.innerHTML='';
+  for(var t=0;t<CFG.teams;t++){
+    (function(ti){
+      var picks=picksOf(ti),slots=[],i;
+      POSN.forEach(function(p){for(i=0;i<(CFG.start[p]||0);i++) slots.push(p);});
+      for(i=0;i<CFG.flex;i++) slots.push('FLEX');
+      for(i=0;i<benchN();i++) slots.push('BN');
+      var fill=slots.map(function(){return null;}),used={};
+      slots.forEach(function(s,ix){
+        if(s==='FLEX'||s==='BN') return;
+        for(var j=0;j<picks.length;j++) if(picks[j].pos===s&&!used[j]){fill[ix]=picks[j];used[j]=1;break;}
+      });
+      slots.forEach(function(s,ix){
+        if(s!=='FLEX') return;
+        for(var j=0;j<picks.length;j++) if(FLEXOK.indexOf(picks[j].pos)>-1&&!used[j]){fill[ix]=picks[j];used[j]=1;break;}
+      });
+      slots.forEach(function(s,ix){
+        if(s!=='BN') return;
+        for(var j=0;j<picks.length;j++) if(!used[j]){fill[ix]=picks[j];used[j]=1;break;}
+      });
+      var rows=slots.map(function(s,ix){
+        var pl=fill[ix];
+        return '<div class="wrr'+(pl?'':' empty')+'">'+
+          '<span class="wrs">'+s+'</span>'+
+          (pl?'<span class="wrp" style="border-left:3px solid '+(COL[pl.pos]||'var(--ln)')+'">'+
+              esc(pl.name)+'</span><span class="wrm">'+pl.pos+' &middot; '+pl.team+' &middot; bye '+pl.bye+'</span>'
+             :'<span class="wrp empty">&mdash;</span><span class="wrm"></span>')+
+          '</div>';
+      }).join('');
+      var d=document.createElement('div');
+      d.className='card wrcard'+(ti===ME()?' mine':'');
+      d.innerHTML='<div class="ch"><h3'+(ti===ME()?' style="color:var(--ac)"':'')+'>'+esc(teamNames[ti])+'</h3>'+
+        '<span class="cx">'+picks.length+'/'+CFG.rounds+'</span></div><div class="wrbody">'+rows+'</div>';
+      host.appendChild(d);
+    })(t);
+  }
 }
 function drawQuick(){
   var box=document.getElementById('qres'),v=document.getElementById('q').value.trim();
@@ -2612,13 +2748,12 @@ function shareUrl(){
   return base+'#watch='+encodeURIComponent(encodeState());
 }
 function readOnly(){ return VIEWER||SYNC.mode==='watch'; }
-var SIMPLE=true;
 function enterViewer(){ VIEWER=true; applyMode(); }
 function applyMode(){
   var ro=readOnly(),b=document.getElementById('viewerBar');
   if(document.body){
     document.body.setAttribute('data-ro',ro?'1':'0');
-    document.body.setAttribute('data-simple',(ro&&SIMPLE)?'1':'0');
+    document.body.setAttribute('data-live',LIVELINK?'1':'0');
   }
   if(b){
     b.hidden=!ro;
@@ -2634,12 +2769,22 @@ function applyMode(){
     var lv=document.getElementById('leaveViewer');
     if(lv){ lv.textContent = VIEWER?'Leave':'Stop watching'; lv.hidden=LIVELINK; }
   }
-  // If a hidden tab was the active one, fall back to the board.
-  if(ro&&SIMPLE){
-    var act=document.querySelector('.tab.on');
-    var hid=['players','targets','insights'];
-    if(act&&hid.indexOf(act.getAttribute('data-t'))>-1) showTab('board');
-  }
+  // Watching and drafting have disjoint tab sets, so whichever mode we just
+  // entered, the active tab almost certainly belongs to the other one.
+  var act=document.querySelector('.tab.on');
+  var cur2=act?act.getAttribute('data-t'):'';
+  var wt=['wboard','wflow','wplayers','wrosters','display'];
+  if(ro&&wt.indexOf(cur2)<0) showTab('wboard');
+  if(!ro&&wt.indexOf(cur2)>-1) showTab('draft');
+  var sc=document.getElementById('stopCard');
+  if(sc) sc.hidden=LIVELINK;   // a watch link has no own-board to return to
+}
+function drawWStatus(){
+  var e=document.getElementById('wSyncStatus'); if(!e) return;
+  var t=SYNC.last?new Date(SYNC.last).toLocaleTimeString():'not yet';
+  e.innerHTML = SYNC.err
+    ? '<span style="color:var(--urg)">'+esc(SYNC.err)+'</span> <span style="color:var(--dimr)">&middot; last update '+t+'</span>'
+    : '<span style="color:var(--ok)">Live</span> <span style="color:var(--dimr)">&middot; last update '+t+'</span>';
 }
 function showTab(name){
   Array.prototype.forEach.call(document.querySelectorAll('.tab'),function(x){
@@ -2825,6 +2970,10 @@ function redraw(){
   drawWait(); drawRoom(); drawAtRisk();
   drawPlayers(); drawTargets(); drawFlow(); drawLogTable(); drawPickLog(); drawCheat();
   drawThemes();
+  if(readOnly()){
+    drawBoard('wbg'); drawFlow('wflowBody'); drawPickLog('wpickLog','wplCount');
+    drawWPlayers(); drawWRosters(); drawWStatus();
+  }
   drawNeeds(); drawDepth(); drawRunway(); drawByTeam(); drawValues(); drawRoster();
   drawBoard(); drawSetup();
 }
@@ -2841,6 +2990,27 @@ Array.prototype.forEach.call(document.querySelectorAll('[data-p]'),function(b){
   });
 });
 document.getElementById('search').addEventListener('input',function(e){search=e.target.value;drawPlayers();});
+document.getElementById('wbgFit').addEventListener('click',function(){
+  this.className='on'; document.getElementById('wbgWide').className='';
+  document.getElementById('wbg').className='bg fit';
+  document.getElementById('wbsc').className='bsc fit';
+});
+document.getElementById('wbgWide').addEventListener('click',function(){
+  this.className='on'; document.getElementById('wbgFit').className='';
+  document.getElementById('wbg').className='bg';
+  document.getElementById('wbsc').className='bsc';
+});
+Array.prototype.forEach.call(document.querySelectorAll('[data-wp]'),function(b){
+  b.addEventListener('click',function(){
+    Array.prototype.forEach.call(document.querySelectorAll('[data-wp]'),function(x){x.className='btn s g';});
+    b.className='btn s'; wFilter=b.getAttribute('data-wp'); drawWPlayers();
+  });
+});
+document.getElementById('wsearch').addEventListener('input',function(e){wSearch=e.target.value;drawWPlayers();});
+document.getElementById('wStop').addEventListener('click',function(){
+  var off=document.querySelector('[data-sm="off"]');
+  if(off) off.click();
+});
 document.getElementById('bgFit').addEventListener('click',function(){
   this.className='on'; document.getElementById('bgWide').className='';
   document.getElementById('bg').className='bg fit';
@@ -2925,7 +3095,16 @@ var THEMEMETA=[
   ['custom','Custom',['#333','#555','#888','#ccc']]
 ];
 function drawThemes(){
-  var g=document.getElementById('thGrid'); if(!g) return;
+  ['thGrid','thGridW'].forEach(function(gid){ drawThemeGrid(gid); });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-cb]'),function(b){
+    b.className=(CUSTOM._base||'dark')===b.getAttribute('data-cb')?'on':'';
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-sz]'),function(b){
+    b.className=(Math.abs(parseFloat(b.getAttribute('data-sz'))-TSCALE)<0.01)?'on':'';
+  });
+}
+function drawThemeGrid(gid){
+  var g=document.getElementById(gid); if(!g) return;
   g.innerHTML='';
   THEMEMETA.forEach(function(m){
     var sw=m[2];
@@ -2936,12 +3115,6 @@ function drawThemes(){
       '<span class="thn">'+m[1]+'</span>';
     b.addEventListener('click',function(){setTheme(m[0]);});
     g.appendChild(b);
-  });
-  Array.prototype.forEach.call(document.querySelectorAll('[data-cb]'),function(b){
-    b.className=(CUSTOM._base||'dark')===b.getAttribute('data-cb')?'on':'';
-  });
-  Array.prototype.forEach.call(document.querySelectorAll('[data-sz]'),function(b){
-    b.className=(Math.abs(parseFloat(b.getAttribute('data-sz'))-TSCALE)<0.01)?'on':'';
   });
 }
 function drawSwatches(){
@@ -3013,14 +3186,21 @@ Array.prototype.forEach.call(document.querySelectorAll('[data-sm]'),function(b){
   b.addEventListener('click',function(){
     Array.prototype.forEach.call(document.querySelectorAll('[data-sm]'),function(x){x.className='';});
     b.className='on';
-    var was=SYNC.mode;
-    SYNC.mode=b.getAttribute('data-sm');
+    var was=SYNC.mode,want=b.getAttribute('data-sm');
+    if(want==='publish'&&was==='watch'&&
+       !confirm('Switch from watching to PUBLISHING? This starts broadcasting your own board to that URL and will overwrite whatever is there.')){
+      Array.prototype.forEach.call(document.querySelectorAll('[data-sm]'),function(x){
+        x.className=x.getAttribute('data-sm')===was?'on':'';});
+      return;
+    }
+    var was2=was;
+    SYNC.mode=want;
     SYNC.url=document.getElementById('syncUrl').value.trim();
     SYNC.err='';
     if(!LIVELINK){ try{localStorage.setItem('ffsync',JSON.stringify({mode:SYNC.mode,url:SYNC.url}));}catch(e){} }
     // Leaving watch mode restores whatever board this device had of its own,
     // since watching only ever held the publisher's picks in memory.
-    if(was==='watch'&&SYNC.mode!=='watch'&&!VIEWER){
+    if(was2==='watch'&&SYNC.mode!=='watch'&&!VIEWER){
       players.forEach(function(p){p.drafted=false;p.target=false;p.bump=0;});
       draftLog=[]; teamNames=[];
       load(); initNames(); computeRepl(); computeStartQual(); computeRoom();
@@ -3043,14 +3223,7 @@ document.getElementById('shWatch').addEventListener('click',function(){
   m.textContent=ok?'Watch link copied':'Select the text below and copy it';
   setTimeout(function(){m.textContent='';},4000);
 });
-document.getElementById('vwSimple').addEventListener('click',function(){
-  SIMPLE=true; this.className='on'; document.getElementById('vwFull').className='';
-  try{localStorage.setItem('ffsimple','1');}catch(e){} applyMode();
-});
-document.getElementById('vwFull').addEventListener('click',function(){
-  SIMPLE=false; this.className='on'; document.getElementById('vwSimple').className='';
-  try{localStorage.setItem('ffsimple','0');}catch(e){} applyMode();
-});
+
 document.getElementById('syncTest').addEventListener('click',function(){
   SYNC.url=document.getElementById('syncUrl').value.trim(); SYNC.err='';
   if(!SYNC.url){document.getElementById('syncStatus').innerHTML='<span style="color:var(--urg)">Enter a sync URL first.</span>';return;}
@@ -3116,9 +3289,6 @@ try{
   applyScale(parseFloat(localStorage.getItem('ffscale'))||1);
   applyTheme(localStorage.getItem('fftheme')||'dark');
 }catch(e){ applyTheme('dark'); }
-try{ SIMPLE=localStorage.getItem('ffsimple')!=='0'; }catch(e){}
-var vs=document.getElementById('vwSimple'),vf=document.getElementById('vwFull');
-if(vs&&vf){ vs.className=SIMPLE?'on':''; vf.className=SIMPLE?'':'on'; }
 var hash=(location.hash||'');
 if(hash.indexOf('#live=')===0){
   // Watch link: live read-only, configured entirely from the URL.
